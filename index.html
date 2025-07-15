@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WF-INTACCT</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        
+         .erp-integration-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .erp-module {
+            position: absolute;
+            border-radius: 25px;
+            padding: 8px 16px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .erp-module:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        
+        .wf-erp-module {
+            background: linear-gradient(135deg, #f9f871 0%, #e6d435 100%);
+            border: 2px solid #d4b429;
+            color: #333;
+        }
+        
+        .intacct-erp-module {
+            background: linear-gradient(135deg, #b3d9ff 0%, #7fc4ff 100%);
+            border: 2px solid #5ba3d0;
+            color: #333;
+        }
+        
+        .system-erp-module {
+            /*background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);*/
+            border: 2px solid #2c5aa0;
+            /*color: white;*/
+        }
+        
+        .central-erp-hub {
+            border-width: 3px !important;
+           
+        }
+        
+        .erp-connection-line {
+            position: absolute;
+            height: 3px;
+            transform-origin: left center;
+            z-index: 1;
+        }
+        
+        .erp-internal-flow {
+            background: #2ecc71;
+        }
+        
+        .erp-data-flow {
+            background: #e74c3c;
+            height: 4px;
+        }
+        
+        .erp-shared-connection {
+            background: #666;
+            height: 2px;
+            opacity: 0.7;
+        }
+        
+        .erp-bi-flow {
+            background: #27ae60;
+        }
+        
+        .erp-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            z-index: 2;
+        }
+        
+        .erp-arrow-green {
+            border-left: 8px solid #2ecc71;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+        
+        .erp-arrow-red {
+           /* border-left: 8px solid #e74c3c;
+            border-top: 6px solid transparent;
+            border-bottom: 6px solid transparent;*/
+        }
+        
+        .erp-flow-label {
+            position: absolute;
+            font-size: 10px;
+            font-weight: bold;
+            color: #e74c3c;
+            background: rgba(255,255,255,0.9);
+            padding: 2px 6px;
+            border-radius: 4px;
+            z-index: 3;
+        }
+        
+        /* ERP Module Positioning */
+        .erp-oe { top: 60px; left: 150px; width: 40px }
+        .erp-bom { top: 110px; left:50px; width: 40px }
+        .erp-pop { top: 160px; left: 50px; width: 40px }
+        .erp-im { top: 135px; left: 150px; width: 40px}
+        .erp-po-lc { top: 210px; left: 150px; width: 40px }
+        
+        .erp-gl { top: 135px; left: 300px; width: 40px }
+      
+        .erp-ar { top: 60px; left: 260px; width: 40px}
+        .erp-ap { top: 210px; left: 260px; width: 40px}
+
+        .erp-cm { top: 60px; left: 400px; width: 40px}
+        .erp-ad { top: 110px; left: 400px; width: 40px}
+        .erp-pr { top: 160px; left: 400px; width: 40px}
+        .erp-bb { top: 210px; left: 400px; width: 40px}
+        
+        .erp-master-tables { 
+            top: 320px; 
+            left:100px; 
+            width: 140px; 
+            height: 60px; 
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .erp-budget-system { 
+            top: 320px; 
+            left: 300px; 
+            width: 140px; 
+            height: 60px; 
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .erp-vu-warehouse {
+            top: 420px;
+            left: 50px;
+            width: 450px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .erp-reports-section {
+            background: #ffffff;
+            border: 2px solid #dee2e6;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .erp-reports-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .erp-reports-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        .erp-report-category h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .erp-report-category ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .erp-report-category li {
+            font-size: 11px;
+            color: #555;
+            margin-bottom: 4px;
+            padding-left: 12px;
+            position: relative;
+        }
+        
+        .erp-report-category li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .erp-legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(248, 249, 250, 0.95);
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 180px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .erp-legend h4 {
+            margin: 0 0 12px 0;
+            color: #2c3e50;
+            font-size: 12px;
+        }
+        
+        .erp-legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 10px;
+            color: #555;
+        }
+        
+        .erp-legend-color {
+            width: 18px;
+            height: 10px;
+            border-radius: 3px;
+            margin-right: 8px;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+        
+        .erp-legend-line {
+            width: 18px;
+            height: 3px;
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+        
+        
+        
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            /*background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);*/
+             background-image: url("https://kendalfloral.com/wp-content/uploads/2020/02/Kendal2235-copy-1.jpg");
+             background-attachment: fixed;
+            
+        }
+        
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+           
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            color: white;
+            padding: 20px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .section-header:hover {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            transform: translateY(-2px);
+        }
+        
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 400;
+        }
+        
+        .section-content {
+            padding: 25px;
+            background: #f8f9fa;
+            border-top: 3px solid #3498db;
+        }
+        
+        .process-step {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .journal-entries {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #3498db;
+        }
+        
+        .journal-entries h4 {
+            color: #2c3e50;
+            margin-top: 0;
+            font-size: 1.1em;
+        }
+        
+        .entry-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #bdc3c7;
+        }
+        
+        .entry-item:last-child {
+            border-bottom: none;
+        }
+        
+        .debit {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .credit {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .diagram-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .diagram-title {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .toggle-btn {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .toggle-btn.rotated {
+            transform: translateY(-50%) rotate(180deg);
+        }
+        
+        .collapsed {
+            display: none;
+        }
+        
+        .key-benefits {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .key-benefits h4 {
+            color: #27ae60;
+            margin-top: 0;
+        }
+        
+        .future-enhancements {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .future-enhancements h4 {
+            color: #856404;
+            margin-top: 0;
+        }
+
+         /* Agenda Table Styles */
+        .agenda-container {
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        .agenda-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .agenda-table th {
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        .agenda-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: top;
+            font-size: 12px;
+        }
+        
+        .agenda-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .day-header td {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+        }
+        
+        .day-header:hover td {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        }
+        
+        .break-row td {
+            background-color: #f1f2f6;
+            font-style: italic;
+            color: #7f8c8d;
+        }
+        
+        .break-row:hover td {
+            background-color: #f1f2f6;
+        }
+        
+        .agenda-table td:first-child {
+            font-weight: 600;
+            color: #2c3e50;
+            white-space: nowrap;
+        }
+        
+        .agenda-table td:nth-child(2) {
+            font-weight: 600;
+            color: #e74c3c;
+            white-space: nowrap;
+        }
+        
+        .agenda-table td:nth-child(3) {
+            font-weight: 600;
+            color: #27ae60;
+        }
+        
+        .agenda-table td:last-child {
+            color: #8e44ad;
+            font-weight: 500;
+        }
+
+
+
+    </style>
+
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Web Flowers - Intacct / Kendal Financial System</h1>
+            <p>July 2025 - Carlsbad CA</p>
+        </div>
+        
+        <div class="content">
+
+               <!-- Meeting Agenda Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('meeting-agenda')">
+                    <h2>Project Implementation Meeting Agenda</h2>
+                    <button class="toggle-btn" id="toggle-meeting-agenda">▼</button>
+                </div>
+                <div class="section-content" id="meeting-agenda">
+                    <div class="key-benefits">
+                        <h4>Strategic Goal</h4>
+                        <p>To integrate WebFlowers with Intacct to simplify cross-system operations, decommission Macola, ensure accurate cost and inventory control, and streamline processes for greater speed and efficiency — with an open scope that allows for flexibility and future enhancements. Aming to have a modern Fully Integrated ERP</p>
+                    </div>
+                    
+                    <div class="agenda-container">
+                        <table class="agenda-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Session</th>
+                                    <th>Description</th>
+                                    <th>Action/Outcome Required</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="day-header">
+                                    <td colspan="5"><strong>July 28, 2025 - Day 1: Foundation & Architecture</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-28</td>
+                                    <td>9:00 – 9:30</td>
+                                    <td>Welcome & Project Goal Reminder</td>
+                                    <td>Welcome the team and remind everyone of the strategic goal: to replace Macola by leveraging WF and Intacct.</td>
+                                    <td>Anna-David-Veronica-Paula</td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-28</td>
+                                    <td>9:30 – 10:15</td>
+                                    <td>Summary of What Has Been Built</td>
+                                    <td>Overview of completed modules: landed cost, receiving, inventory, item setup, production, invoicing, month-end.</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-28</td>
+                                    <td>10:15 – 10:30</td>
+                                    <td>1. General Architecture</td>
+                                    <td>Present WF-Intacct interaction, system responsibilities, and the need for a perpetual inventory system.</td>
+                                    <td></td>
+                                </tr>
+                                <tr class="break-row">
+                                    <td>2025-07-28</td>
+                                    <td>10:30 – 1:00</td>
+                                    <td>Break</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-28</td>
+                                    <td>1:00 – 3:00</td>
+                                    <td>2. Master Tables</td>
+                                    <td>Present built tables: costing groups, categories, Material cost types, locations, vendor config, Chart of Accounts(Workato-Keep updated), distribution file, inventory transactions</td>
+                                    <td>Assign Owners</td>
+                                </tr>
+                                
+                                <tr class="day-header">
+                                    <td colspan="5"><strong>July 29, 2025 - Day 2: Core Modules</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-29</td>
+                                    <td>9:00 - 10:30</td>
+                                    <td>3. Landed Cost Module</td>
+                                    <td>Show functionality, improvements over Macola, future integration with trucking and cubes.</td>
+                                    <td>David</td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-29</td>
+                                    <td>10:30 - 10:45</td>
+                                    <td>4. PO Receiving</td>
+                                    <td>Show PO receiving flow, edit lock mechanism; need for credit enhancements.</td>
+                                    <td>Assign Owners</td>
+                                </tr>
+                                <tr class="break-row">
+                                    <td>2025-07-29</td>
+                                    <td>10:45 - 11:00</td>
+                                    <td>Break</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-29</td>
+                                    <td>11:00 – 12:30</td>
+                                    <td>5. Inventory Transactions</td>
+                                    <td>Show transaction types (TA, transfer, adjust) and their impact on the distribution file. Inventory Location/CG Summary</td>
+                                    <td></td>
+                                </tr>
+                                <tr class="break-row">
+                                    <td>2025-07-29</td>
+                                    <td>12:30 – 1:30</td>
+                                    <td>Lunch</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-29</td>
+                                    <td>1:30 – 3:00</td>
+                                    <td>6. Production Reporting</td>
+                                    <td>Dynamic BOMs, last-minute changes, disassembly use cases.</td>
+                                    <td></td>
+                                </tr>
+                                
+                                <tr class="day-header">
+                                    <td colspan="5"><strong>July 30, 2025 - Day 3: Integration & Development</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-30</td>
+                                    <td>9:00 – 9:30</td>
+                                    <td>7. Invoicing</td>
+                                    <td>Show invoice posting to distribution files and integration path to Intacct.</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-30</td>
+                                    <td>9:30 – 11:00</td>
+                                    <td>8. AP Integration</td>
+                                    <td>Show Examples for Flowers, HGs and Landed Costs, Integration with Intacct</td>
+                                    <td></td>
+                                </tr>
+                                <tr class="break-row">
+                                    <td>2025-07-30</td>
+                                    <td>10:30 – 10:45</td>
+                                    <td>Break</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-30</td>
+                                    <td>10:45 – 12:15</td>
+                                    <td>9. Pending to Develop</td>
+                                    <td>Month-end prototype, HG/service invoices, OE/PO credit workflows.</td>
+                                    <td></td>
+                                </tr>
+                                <tr class="break-row">
+                                    <td>2025-07-30</td>
+                                    <td>12:15 – 1:15</td>
+                                    <td>Lunch</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                
+                                <tr class="day-header">
+                                    <td colspan="5"><strong>July 31, 2025 - Day 4: Implementation Strategy</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-31</td>
+                                    <td>9:00 – 10:30</td>
+                                    <td>11. Implementation Strategy/Integration With Intacct</td>
+                                    <td>Initial data upload(Inventories,Costs,balances) Module rollout, Macola robot automation, data accuracy safeguards. Workato integration scope, flow syncs, and exception handling.</td>
+                                    <td>Define Timelines/Teams Ricardo/David- Misma pagina</td>
+                                </tr>
+                                <tr class="break-row">
+                                    <td>2025-07-31</td>
+                                    <td>10:30 – 10:45</td>
+                                    <td>Break</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-31</td>
+                                    <td>10:45 – 12:00</td>
+                                    <td>12. Reporting & Data Warehouse</td>
+                                    <td>Short-term report continuity, DW transition, future handoff to VU. (Jose)</td>
+                                    <td>Vender la idea y beneficios de mover todo a VU</td>
+                                </tr>
+                                <tr class="break-row">
+                                    <td>2025-07-31</td>
+                                    <td>12:00 – 1:00</td>
+                                    <td>Lunch</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-07-31</td>
+                                    <td>1:00 – 2:00</td>
+                                    <td>Open Q&A & Feedback</td>
+                                    <td>Open discussion, gap identification, resource needs.</td>
+                                    <td>Anna</td>
+                                </tr>
+                                
+                                <tr class="day-header">
+                                    <td colspan="5"><strong>August 1, 2025 - Day 5: Finalization</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-08-01</td>
+                                    <td>9:00 – 10:30</td>
+                                    <td>13. Intacct Rollout Planning</td>
+                                    <td>AP/AR go-live plan, UAT schedule, training support needs. (Alejandra,Tomas)</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>2025-08-01</td>
+                                    <td>10:30 – 12:00</td>
+                                    <td>Final Wrap-Up</td>
+                                    <td>Confirm commitments, align on communication plans and next steps.</td>
+                                    <td>Anna - Luis</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+             <!-- ERP Integration Chart Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('erp-integration')">
+                    <h2>Web Flowers & Intacct ERP Integration</h2>
+                    <button class="toggle-btn" id="toggle-erp-integration">▼</button>
+                </div>
+                <div class="section-content" id="erp-integration">
+                    <div class="erp-integration-container">
+                        <!-- Web Flowers Modules -->
+                        <div class="erp-module wf-erp-module erp-oe">OE</div>
+                        <div class="erp-module wf-erp-module erp-bom">BOM</div>
+                        <div class="erp-module wf-erp-module erp-pop">POP</div>
+                        <div class="erp-module wf-erp-module erp-im">IM</div>
+                        <div class="erp-module wf-erp-module erp-po-lc">PO+LC</div>
+                        
+                        <!-- Intacct Modules -->
+                        <div class="erp-module intacct-erp-module erp-gl central-erp-hub">GL</div>
+                        <div class="erp-module intacct-erp-module erp-cm">CM</div>
+                        <div class="erp-module intacct-erp-module erp-ad">AD</div>
+                        <div class="erp-module intacct-erp-module erp-ar">AR</div>
+                        <div class="erp-module intacct-erp-module erp-ap">AP</div>
+                        <div class="erp-module intacct-erp-module erp-pr">PR</div>
+                        <div class="erp-module intacct-erp-module erp-bb">BB</div>
+                        
+                        <!-- System Modules -->
+                        <div class="erp-module system-erp-module erp-master-tables">
+                            <div style="font-size: 11px; margin-bottom: 3px;">Master Tables</div>
+                            <div style="font-size: 8px; opacity: 0.9;">Vendors, Customers, Chart of Accounts</div>
+                        </div>
+                        
+                        <div class="erp-module system-erp-module erp-budget-system">
+                            <div style="font-size: 11px; margin-bottom: 3px;">Budget System</div>
+                            <div style="font-size: 8px; opacity: 0.9;">Planning & Forecasting</div>
+                        </div>
+                        
+                        <div class="erp-module system-erp-module erp-vu-warehouse">
+                            <div style="margin-bottom: 4px;">VU - Business Intelligence Data Warehouse</div>
+                            <div style="font-size: 11px; opacity: 0.9;">Dashboards • Reports • Analytics • Data Integration</div>
+                        </div>
+                        
+                        <!-- Connection Lines -->
+                        <!-- <div class="erp-connection-line erp-internal-flow" style="top: 195px; left: 200px; width: 60px;"></div> -->
+                        <!--<div class="erp-connection-line erp-internal-flow" style="top: 145px; left: 140px; width: 40px; transform: rotate(45deg);"></div> -->
+                        <!--<div class="erp-connection-line erp-internal-flow" style="top: 145px; left: 240px; width: 40px; transform: rotate(-45deg);"></div> -->
+                        <!--<div class="erp-connection-line erp-internal-flow" style="top: 225px; left: 240px; width: 40px; transform: rotate(45deg);"></div> -->
+                        <!--<div class="erp-connection-line erp-internal-flow" style="top: 225px; left: 140px; width: 40px; transform: rotate(-45deg);"></div> -->
+                        
+                        <!-- Main Data Flow -->
+                        <div class="erp-connection-line erp-data-flow" style="top: 152px; left: 225px; width: 75px;"></div>
+                        <div class="erp-arrow erp-arrow-red" style="top: 175px; left: 428px;"></div>
+                     
+                        
+                        <!-- Integration Flows -->
+                        <div class="erp-connection-line erp-data-flow" style="top: 75px; left: 225px; width: 35px;"></div>
+                        <div class="erp-arrow erp-arrow-red" style="top: 115px; left: 275px;"></div>
+                        
+                        <div class="erp-connection-line erp-data-flow" style="top: 228px; left: 225px; width: 35px;"></div>
+                        <div class="erp-arrow erp-arrow-red" style="top: 226px; left: 300px;"></div>
+                        
+               
+                        <div class="erp-legend">
+                            <h4>Legend</h4>
+                            <div class="erp-legend-item">
+                                <div class="erp-legend-color" style="background: linear-gradient(135deg, #f9f871 0%, #e6d435 100%); border-color: #d4b429;"></div>
+                                Web Flowers
+                            </div>
+                            <div class="erp-legend-item">
+                                <div class="erp-legend-color" style="background: linear-gradient(135deg, #b3d9ff 0%, #7fc4ff 100%); border-color: #5ba3d0;"></div>
+                                Intacct
+                            </div>
+                           
+                            <div class="erp-legend-item">
+                                <div class="erp-legend-line" style="background: #e74c3c; height: 4px;"></div>
+                                Data Integration
+                            </div>
+                        
+                          
+                        </div>
+                    </div>
+                    
+                    <div class="erp-reports-section">
+                        <div class="erp-reports-title">Financial Reports & Analytics</div>
+                        <div class="erp-reports-grid">
+                            <div class="erp-report-category">
+                                <h4>Core Financial Reports</h4>
+                                <ul>
+                                    <li>P&L Statement</li>
+                                    <li>Balance Sheet</li>
+                                    <li>Cash Flow Statement</li>
+                                    <li>Trial Balance</li>
+                                    <li>General Ledger Detail</li>
+                                    <li>Budget vs Actual</li>
+                                    <li>Variance Analysis</li>
+                                    <li>Financial Ratios</li>
+                                    <li>Aged A/R & A/P</li>
+                                    <li>Bank Reconciliation</li>
+                                </ul>
+                            </div>
+                            <div class="erp-report-category">
+                                <h4>Flower Operations Reports</h4>
+                                <ul>
+                                    <li>Flower Procurement Cost Analysis</li>
+                                    <li>Production Order Profitability</li>
+                                    <li>Fresh Inventory Turnover</li>
+                                    <li>Bill of Materials Costing</li>
+                                    <li>Order Entry Performance</li>
+                                    <li>Landed Cost per Unit</li>
+                                    <li>Vendor Performance Metrics</li>
+                                    <li>Quality Control Reports</li>
+                                    <li>Seasonal Trend Analysis</li>
+                                    <li>Waste & Spoilage Tracking</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+            <!-- PO Acceptance Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('po-acceptance')">
+                    <h2>PO Acceptance Process</h2>
+                    <button class="toggle-btn" id="toggle-po-acceptance">▼</button>
+                </div>
+                <div class="section-content" id="po-acceptance">
+                    <div class="key-benefits">
+                        <h4>Key Benefits</h4>
+                        <ul>
+                            <li>Makes PO posting a permanent transaction for better control</li>
+                            <li>Acts as final accuracy check and confirms full receipt of goods</li>
+                            <li>Assigns accountable owner to reduce errors</li>
+                            <li>Enables inventory location definition (e.g., SLC/MIA)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="diagram-container">
+                        <div class="diagram-title">PO Acceptance Transaction Flow</div>
+                        <svg id="po-sankey" width="800" height="300"></svg>
+                    </div>
+                    
+                    <div class="journal-entries">
+                        <h4>Workflow Journal Entries</h4>
+                        <div class="entry-item">
+                            <span class="debit">D - Inventory</span>
+                            <span>Increase inventory value</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="credit">C - Purchases Clearing (Flowers/HG)</span>
+                            <span>Clear purchase obligations</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="credit">C - Purchases Clearing (Freight)</span>
+                            <span>Clear freight charges</span>
+                        </div>
+                    </div>
+                    
+                    <div class="process-step">
+                        <h4>Workflow Transactions</h4>
+                        <ul>
+                            <li><strong>Update Inventory:</strong> Adjust quantity and location</li>
+                            <li><strong>Land The Cost:</strong> Track into separate bucket for accurate costing</li>
+                            <li><strong>Recalculate Average Cost:</strong> Update weighted average cost basis</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Three-Way Match Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('three-way-match')">
+                    <h2>PO/AP Three-Way Match Process</h2>
+                    <button class="toggle-btn" id="toggle-three-way-match">▼</button>
+                </div>
+                <div class="section-content" id="three-way-match">
+                    <div class="key-benefits">
+                        <h4>Process Overview</h4>
+                        <ul>
+                            <li>AP/Production Clerk verifies <strong>Invoice, PO, and Receipt</strong> before posting</li>
+                            <li>Records Purchase Price Variance (PPV) and freight differences</li>
+                            <li>Transaction pushed to Intacct for final processing</li>
+                            <li>Provides simple Landed Cost AP processing</li>
+                            <li>Pulls information from related parties to simplify operations</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="diagram-container">
+                        <div class="diagram-title">Three-Way Match Transaction Flow</div>
+                        <svg id="three-way-sankey" width="800" height="400"></svg>
+                    </div>
+                    
+                    <div class="journal-entries">
+                        <h4>Workflow Journal Entries</h4>
+                        <div class="entry-item">
+                            <span class="debit">D - Purchases Clearing</span>
+                            <span>Clear purchase obligations</span>
+                        </div>
+                        <div class="entry-item">
+                            <span>C/D - Variance Accounts</span>
+                            <span>Record PPV and freight differences</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="credit">C - AP WF to Intacct Transfer</span>
+                            <span>Transfer to Intacct system</span>
+                        </div>
+                    </div>
+                    
+                    <div class="journal-entries">
+                        <h4>Intacct Journal Entries</h4>
+                        <div class="entry-item">
+                            <span class="debit">D - Purchases Clearing</span>
+                            <span>Mirror WF clearing entry</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="credit">C - AP WF to Intacct Transfer</span>
+                            <span>Complete transfer process</span>
+                        </div>
+                        <p><em>Transaction details are stored in notes for audit trail</em></p>
+                    </div>
+                    
+                    <div class="process-step">
+                        <h4>Daily/ Month-End Reconciliation</h4>
+                        <p>At month-end, a reconciliation process creates clearing entries in both WF and Intacct to zero out the AP WF to Intacct Transfer accounts, ensuring clean month-end balances. However a Daily Reconciliation will exist via a tool</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Production Reporting Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('production-reporting')">
+                    <h2>POP - Production Reporting</h2>
+                    <button class="toggle-btn" id="toggle-production-reporting">▼</button>
+                </div>
+                <div class="section-content" id="production-reporting">
+                    <div class="key-benefits">
+                        <h4>Process Controls</h4>
+                        <ul>
+                            <li>Same controls as PO Acceptance: requires user validation before posting</li>
+                            <li>Allows BOM adjustments (adding/removing vases, food, etc.) to match actual usage</li>
+                            <li>Updates WF Finished Goods inventory accurately</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="diagram-container">
+                        <div class="diagram-title">Production Reporting Transaction Flow</div>
+                        <svg id="production-sankey" width="800" height="300"></svg>
+                    </div>
+                    
+                    <div class="journal-entries">
+                        <h4>Workflow Journal Entries</h4>
+                        <div class="entry-item">
+                            <span class="credit">C - Raw Materials</span>
+                            <span>Consume raw material inventory</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="debit">D - Finished Goods</span>
+                            <span>Increase finished goods inventory</span>
+                        </div>
+                        <p><em>WIP account exists but is not currently used due to short production cycles</em></p>
+                    </div>
+                    
+                    <div class="process-step">
+                        <h4>Inventory Transactions</h4>
+                        <ul>
+                            <li><strong>Raw Materials:</strong> Consumes inventory based on actual usage</li>
+                            <li><strong>Finished Goods:</strong> Increases inventory and adjusts average cost accordingly</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="future-enhancements">
+                        <h4>Future Enhancements</h4>
+                        <p>Value-Added Cost tracking may be included in future releases to provide more detailed production costing.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Entry Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('order-entry')">
+                    <h2>OE - Order Entry & Invoicing</h2>
+                    <button class="toggle-btn" id="toggle-order-entry">▼</button>
+                </div>
+                <div class="section-content" id="order-entry">
+                    <div class="key-benefits">
+                        <h4>Process Overview</h4>
+                        <ul>
+                            <li>Invoicing occurs in WF with invoices remaining Open until posted</li>
+                            <li>New posting process added specifically for the costing system</li>
+                            <li>Supports multi-location invoicing (e.g., SLC inventory management)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="diagram-container">
+                        <div class="diagram-title">Order Entry Transaction Flow</div>
+                        <svg id="order-entry-sankey" width="800" height="400"></svg>
+                    </div>
+                    
+                    <div class="journal-entries">
+                        <h4>Workflow Journal Entries</h4>
+                        <div class="entry-item">
+                            <span class="credit">C - Finished Goods / Raw Materials Inventory</span>
+                            <span>Reduce inventory for sold items</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="debit">D - COGS</span>
+                            <span>Record cost of goods sold</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="debit">D - AR Transfer to Intacct</span>
+                            <span>Transfer receivable to Intacct</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="credit">C - Revenue</span>
+                            <span>Record sales revenue</span>
+                        </div>
+                    </div>
+                    
+                    <div class="journal-entries">
+                        <h4>Intacct Journal Entries</h4>
+                        <div class="entry-item">
+                            <span class="debit">D - Accounts Receivable</span>
+                            <span>Record customer receivable</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="credit">C - AR Transfer to Intacct</span>
+                            <span>Complete transfer process</span>
+                        </div>
+                    </div>
+                    
+                    <div class="process-step">
+                        <h4>Inventory Transactions</h4>
+                        <p>Reduces inventory of sold items and updates average cost calculations for remaining inventory.</p>
+                    </div>
+                    
+                    <div class="process-step">
+                        <h4>Intacct Documents</h4>
+                        <ul>
+                            <li><strong>AR Invoice:</strong> Customer billing document</li>
+                            <li><strong>AR Credit:</strong> Credit memo processing</li>
+                        </ul>
+                        <p>Month-end reconciliation clears the AR Transfer to Intacct account.</p>
+                    </div>
+                    
+                    <div class="future-enhancements">
+                        <h4>Development Status</h4>
+                        <p>Credit module is currently under development for comprehensive credit memo handling.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Inventory Management Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('inventory-management')">
+                    <h2>IM - Inventory Management</h2>
+                    <button class="toggle-btn" id="toggle-inventory-management">▼</button>
+                </div>
+                <div class="section-content" id="inventory-management">
+                    <div class="key-benefits">
+                        <h4>Transaction Types</h4>
+                        <ul>
+                            <li><strong>Adjustments:</strong> Quantity and value corrections</li>
+                            <li><strong>Issues:</strong> Inventory consumption tracking</li>
+                            <li><strong>Receipts:</strong> Inventory additions</li>
+                            <li><strong>Transfers:</strong> Location-to-location movements</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="diagram-container">
+                        <div class="diagram-title">Inventory Management Transaction Flow</div>
+                        <svg id="inventory-sankey" width="800" height="350"></svg>
+                    </div>
+                    
+                    <div class="process-step">
+                        <h4>System Capabilities</h4>
+                        <p>Adjusts inventory quantities, costs, and GL accounts based on user input, similar to Macola functionality. Serves as foundation for future enhancements like TA module integration and approval workflows.</p>
+                    </div>
+                    
+                    <div class="future-enhancements">
+                        <h4>Future Enhancements</h4>
+                        <ul>
+                            <li>TA module integration for advanced analytics</li>
+                            <li>Approval workflows for inventory transactions</li>
+                            <li>Enhanced reporting capabilities</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Month-End Close Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('month-end-close')">
+                    <h2>IM - Month-End Close Process</h2>
+                    <button class="toggle-btn" id="toggle-month-end-close">▼</button>
+                </div>
+                <div class="section-content" id="month-end-close">
+                    <div class="key-benefits">
+                        <h4>Process Overview</h4>
+                        <ul>
+                            <li>Validates that all processes are completed before close</li>
+                            <li>Allows inventory freeze at a specific point in time</li>
+                            <li>Uses WF physical counts to post final inventory balances</li>
+                            <li>Creates variances for later adjustment via Inventory Transactions</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="diagram-container">
+                        <div class="diagram-title">Month-End Close Transaction Flow</div>
+                        <svg id="month-end-sankey" width="800" height="400"></svg>
+                    </div>
+                    
+                    <div class="journal-entries">
+                        <h4>Workflow Journal Entries</h4>
+                        <div class="entry-item">
+                            <span>D/C - Variance</span>
+                            <span>Record physical count differences</span>
+                        </div>
+                        <div class="entry-item">
+                            <span>D/C - Inventory</span>
+                            <span>Adjust inventory to actual counts</span>
+                        </div>
+                    </div>
+                    
+                    <div class="journal-entries">
+                        <h4>Intacct Journal Entries</h4>
+                        <div class="entry-item">
+                            <span class="credit">C - AP Transfer Account</span>
+                            <span>Clear AP transfer balance</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="debit">D - COGS</span>
+                            <span>Record cost adjustments</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="debit">D - AR Transfer Account</span>
+                            <span>Clear AR transfer balance</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="credit">C - Revenue</span>
+                            <span>Record revenue adjustments</span>
+                        </div>
+                    </div>
+                    
+                    <div class="process-step">
+                        <h4>Count Adjustments</h4>
+                        <p>Physical count variances are processed through inventory transactions to ensure accurate month-end balances and proper variance tracking. Reconciliation process for Transfer Accounts and reset balances against a month closing AP and AR Account</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Toggle section functionality
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId);
+            const toggle = document.getElementById('toggle-' + sectionId);
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                toggle.textContent = '▼';
+                toggle.classList.remove('rotated');
+            } else {
+                content.classList.add('collapsed');
+                toggle.textContent = '▲';
+                toggle.classList.add('rotated');
+            }
+        }
+        
+        // Sankey diagram creation function
+        function createSankey(containerId, data) {
+            const margin = {top: 20, right: 20, bottom: 20, left: 20};
+            const width = 800 - margin.left - margin.right;
+            const height = data.height - margin.top - margin.bottom;
+            
+            const svg = d3.select('#' + containerId)
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom);
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // Create nodes
+            const nodes = data.nodes.map((d, i) => ({
+                ...d,
+                x: d.x * width,
+                y: d.y * height,
+                width: 120,
+                height: 30
+            }));
+            
+            // Create links
+            const links = data.links.map(d => ({
+                ...d,
+                source: nodes[d.source],
+                target: nodes[d.target]
+            }));
+            
+            // Draw links
+            g.selectAll('.link')
+                .data(links)
+                .enter().append('path')
+                .attr('class', 'link')
+                .attr('d', d => {
+                    const sourceX = d.source.x + d.source.width;
+                    const sourceY = d.source.y + d.source.height / 2;
+                    const targetX = d.target.x;
+                    const targetY = d.target.y + d.target.height / 2;
+                    const midX = (sourceX + targetX) / 2;
+                    
+                    return `M${sourceX},${sourceY} C${midX},${sourceY} ${midX},${targetY} ${targetX},${targetY}`;
+                })
+                .style('fill', 'none')
+                .style('stroke', d => d.color || '#3498db')
+                .style('stroke-width', d => d.width || 2)
+                .style('opacity', 0.7);
+            
+            // Draw nodes
+            const node = g.selectAll('.node')
+                .data(nodes)
+                .enter().append('g')
+                .attr('class', 'node')
+                .attr('transform', d => `translate(${d.x},${d.y})`);
+            
+            node.append('rect')
+                .attr('width', d => d.width)
+                .attr('height', d => d.height)
+                .style('fill', d => d.color || '#34495e')
+                .style('stroke', '#2c3e50')
+                .style('stroke-width', 1)
+                .style('rx', 5);
+            
+            node.append('text')
+                .attr('x', d => d.width / 2)
+                .attr('y', d => d.height / 2)
+                .attr('dy', '0.35em')
+                .style('text-anchor', 'middle')
+                .style('fill', 'white')
+                .style('font-size', '12px')
+                .style('font-weight', 'bold')
+                .text(d => d.name);
+        }
+        
+        // Initialize all Sankey diagrams
+        document.addEventListener('DOMContentLoaded', function() {
+            // PO Acceptance Sankey
+            createSankey('po-sankey', {
+                height: 300,
+                nodes: [
+                    {name: 'PO Receipt', x: 0, y: 0.2, color: '#e74c3c'},
+                    {name: 'PO Acceptance', x: 0.25, y: 0.4, color: '#9b59b6'},
+                    {name: 'Inventory', x: 0.5, y: 0.1, color: '#27ae60'},
+                    {name: 'Purchases Clearing', x: 0.5, y: 0.5, color: '#f39c12'},
+                    {name: 'Freight Clearing', x: 0.5, y: 0.8, color: '#e67e22'},
+                    {name: 'Update Inventory', x: 0.75, y: 0.2, color: '#3498db'},
+                    {name: 'Recalc Avg Cost', x: 0.75, y: 0.6, color: '#1abc9c'}
+                ],
+                links: [
+                    {source: 0, target: 1, color: '#e74c3c', width: 3},
+                    {source: 1, target: 2, color: '#27ae60', width: 3},
+                    {source: 1, target: 3, color: '#f39c12', width: 3},
+                    {source: 1, target: 4, color: '#e67e22', width: 3},
+                    {source: 2, target: 5, color: '#3498db', width: 2},
+                    {source: 2, target: 6, color: '#1abc9c', width: 2}
+                ]
+            });
+            
+            // Three-Way Match Sankey
+            createSankey('three-way-sankey', {
+                height: 400,
+                nodes: [
+                    {name: 'Invoice', x: 0, y: 0.1, color: '#e74c3c'},
+                    {name: 'PO', x: 0, y: 0.4, color: '#9b59b6'},
+                    {name: 'Receipt', x: 0, y: 0.7, color: '#27ae60'},
+                    {name: 'Three-Way Match', x: 0.25, y: 0.4, color: '#34495e'},
+                    {name: 'Purchases Clearing', x: 0.5, y: 0.2, color: '#f39c12'},
+                    {name: 'Variance Accounts', x: 0.5, y: 0.4, color: '#e67e22'},
+                    {name: 'WF to Intacct', x: 0.5, y: 0.6, color: '#3498db'},
+                    {name: 'Intacct Processing', x: 0.75, y: 0.4, color: '#1abc9c'}
+                ],
+                links: [
+                    {source: 0, target: 3, color: '#e74c3c', width: 2},
+                    {source: 1, target: 3, color: '#9b59b6', width: 2},
+                    {source: 2, target: 3, color: '#27ae60', width: 2},
+                    {source: 3, target: 4, color: '#f39c12', width: 3},
+                    {source: 3, target: 5, color: '#e67e22', width: 2},
+                    {source: 3, target: 6, color: '#3498db', width: 3},
+                    {source: 6, target: 7, color: '#1abc9c', width: 3}
+                ]
+            });
+            
+            // Production Reporting Sankey
+            createSankey('production-sankey', {
+                height: 300,
+                nodes: [
+                    {name: 'Raw Materials', x: 0, y: 0.3, color: '#e74c3c'},
+                    {name: 'Production Process', x: 0.33, y: 0.4, color: '#9b59b6'},
+                    {name: 'BOM Adjustments', x: 0.33, y: 0.7, color: '#e67e22'},
+                    {name: 'Finished Goods', x: 0.66, y: 0.2, color: '#27ae60'},
+                    {name: 'Cost Calculation', x: 0.66, y: 0.6, color: '#3498db'}
+                ],
+                links: [
+                    {source: 0, target: 1, color: '#e74c3c', width: 3},
+                    {source: 2, target: 1, color: '#e67e22', width: 2},
+                    {source: 1, target: 3, color: '#27ae60', width: 3},
+                    {source: 1, target: 4, color: '#3498db', width: 2}
+                ]
+            });
+            
+            // Order Entry Sankey
+            createSankey('order-entry-sankey', {
+                height: 400,
+                nodes: [
+                    {name: 'Customer Order', x: 0, y: 0.3, color: '#e74c3c'},
+                    {name: 'WF Invoice', x: 0.2, y: 0.4, color: '#9b59b6'},
+                    {name: 'Inventory', x: 0.4, y: 0.1, color: '#27ae60'},
+                    {name: 'COGS', x: 0.4, y: 0.35, color: '#f39c12'},
+                    {name: 'AR Transfer', x: 0.4, y: 0.6, color: '#3498db'},
+                    {name: 'Revenue', x: 0.4, y: 0.85, color: '#1abc9c'},
+                    {name: 'Intacct AR', x: 0.6, y: 0.6, color: '#34495e'},
+                    {name: 'Payments', x: 0.8, y: 0.6, color: '#e74c3c'}
+                ],
+                links: [
+                    {source: 0, target: 1, color: '#e74c3c', width: 3},
+                    {source: 1, target: 2, color: '#27ae60', width: 2},
+                    {source: 1, target: 3, color: '#f39c12', width: 2},
+                    {source: 1, target: 4, color: '#3498db', width: 3},
+                    {source: 1, target: 5, color: '#1abc9c', width: 3},
+                    {source: 4, target: 6, color: '#34495e', width: 3},
+                    {source: 6, target: 7, color: '#e74c3c', width: 2}
+                ]
+            });
+            
+            // Inventory Management Sankey
+            createSankey('inventory-sankey', {
+                height: 350,
+                nodes: [
+                    {name: 'Adjustments', x: 0, y: 0.1, color: '#e74c3c'},
+                    {name: 'Issues', x: 0, y: 0.35, color: '#9b59b6'},
+                    {name: 'Receipts', x: 0, y: 0.6, color: '#27ae60'},
+                    {name: 'Transfers', x: 0, y: 0.85, color: '#e67e22'},
+                    {name: 'IM Processing', x: 0.35, y: 0.4, color: '#34495e'},
+                    {name: 'Inventory Update', x: 0.65, y: 0.2, color: '#3498db'},
+                    {name: 'GL Adjustment', x: 0.65, y: 0.5, color: '#f39c12'},
+                    {name: 'Cost Recalc', x: 0.65, y: 0.8, color: '#1abc9c'}
+                ],
+                links: [
+                    {source: 0, target: 4, color: '#e74c3c', width: 2},
+                    {source: 1, target: 4, color: '#9b59b6', width: 2},
+                    {source: 2, target: 4, color: '#27ae60', width: 2},
+                    {source: 3, target: 4, color: '#e67e22', width: 2},
+                    {source: 4, target: 5, color: '#3498db', width: 3},
+                    {source: 4, target: 6, color: '#f39c12', width: 3},
+                    {source: 4, target: 7, color: '#1abc9c', width: 2}
+                ]
+            });
+            
+            // Month-End Close Sankey
+            createSankey('month-end-sankey', {
+                height: 400,
+                nodes: [
+                    {name: 'Physical Count', x: 0, y: 0.3, color: '#e74c3c'},
+                    {name: 'WF Processing', x: 0.2, y: 0.4, color: '#9b59b6'},
+                    {name: 'Inventory Adj', x: 0.4, y: 0.1, color: '#27ae60'},
+                    {name: 'Variance', x: 0.4, y: 0.35, color: '#f39c12'},
+                    {name: 'AP Transfer Clear', x: 0.4, y: 0.6, color: '#3498db'},
+                    {name: 'AR Transfer Clear', x: 0.4, y: 0.85, color: '#1abc9c'},
+                    {name: 'Intacct Close', x: 0.6, y: 0.4, color: '#34495e'},
+                    {name: 'Final Balances', x: 0.8, y: 0.4, color: '#2c3e50'}
+                ],
+                links: [
+                    {source: 0, target: 1, color: '#e74c3c', width: 3},
+                    {source: 1, target: 2, color: '#27ae60', width: 2},
+                    {source: 1, target: 3, color: '#f39c12', width: 2},
+                    {source: 1, target: 4, color: '#3498db', width: 2},
+                    {source: 1, target: 5, color: '#1abc9c', width: 2},
+                    {source: 4, target: 6, color: '#34495e', width: 2},
+                    {source: 5, target: 6, color: '#34495e', width: 2},
+                    {source: 6, target: 7, color: '#2c3e50', width: 3}
+                ]
+            });
+        });
+    </script>
+</body>
+</html>
