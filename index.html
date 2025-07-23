@@ -3268,7 +3268,29 @@
            
 
 
+       <!-- Intacct Implementation -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('Intacct')">
+                    <h2>Intacct Sandbox Implementation</h2>
+                    <div class="qa-icon" onclick="openQAModal(event, 'Intacct')" data-section="Intacct">💬</div>
+                    <button class="toggle-btn" id="toggle-intacct">▼</button>
+                </div>
+                <div class="section-content collapsed" id="Intacct">
+                    <div class="erp-integration-container">
+                     
+                          <iframe src="https://kendalflorexpo-my.sharepoint.com/personal/fcely_florexpo_com/_layouts/15/Doc.aspx?sourcedoc={db4d4b46-09af-4ca7-8a7c-b42774322893}&amp;action=embedview&amp;wdAr=1.777462121212121" width="100%" height="100%" frameborder="0">This is an embedded <a target="_blank" href="https://office.com">Microsoft Office</a> presentation, powered by <a target="_blank" href="https://office.com/webapps">Office</a>.</iframe>
+
        
+
+                    </div>
+
+                </div>
+            </div>
+
+
+
+
+              
 
         
     <!-- Q&A Summary Section -->
@@ -3723,7 +3745,8 @@ function openQAModal(event, sectionId) {
         'order-entry': 'Order Entry & Invoicing',
         'three-way-match': 'Three-Way Match Process',
         'month-end-close': 'Month-End Close Process',
-        'Timeline': 'Project Timeline'
+        'Timeline': 'Project Timeline',
+        'Intacct' :'Intacct'
     };
     
     title.textContent = `Q&A - ${sectionNames[sectionId] || sectionId}`;
@@ -4025,7 +4048,7 @@ function forceUpdateAllPendingCounts() {
             'meeting-agenda', 'historical-context', 'erp-integration', 
             'final-release', 'MeetingGoals', 'po-acceptance', 
             'inventory-management', 'production-reporting', 'order-entry', 
-            'three-way-match', 'month-end-close', 'Timeline'
+            'three-way-match', 'month-end-close', 'Timeline','Intacct'
         ];
         
         sections.forEach(sectionId => {
@@ -4102,7 +4125,7 @@ function updateIconBadge(sectionId, count) {
 }
 
 function updateAllPendingCounts() {
-    const sections = ['meeting-agenda', 'historical-context', 'erp-integration', 'final-release', 'MeetingGoals', 'po-acceptance', 'inventory-management', 'production-reporting', 'order-entry', 'three-way-match', 'month-end-close', 'Timeline'];
+    const sections = ['meeting-agenda', 'historical-context', 'erp-integration', 'final-release', 'MeetingGoals', 'po-acceptance', 'inventory-management', 'production-reporting', 'order-entry', 'three-way-match', 'month-end-close', 'Timeline','Intacct'];
     sections.forEach(sectionId => updatePendingCount(sectionId));
 }
 
@@ -4203,7 +4226,8 @@ function renderQASummary(allMessages) {
         'order-entry': 'Order Entry & Invoicing',
         'three-way-match': 'Three-Way Match Process',
         'month-end-close': 'Month-End Close Process',
-        'Timeline': 'Project Timeline'
+        'Timeline': 'Project Timeline',
+        'Intacct' : 'Intacct'
     };
     
     // Questions and Answers Section
