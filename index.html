@@ -2934,6 +2934,41 @@
 </div>
 
 
+         <!-- Master Tables -->
+<div class="section">
+    <div class="section-header" onclick="toggleSection('MasterTables')">
+        <h2>Master Tables</h2>
+        <div class="qa-icon" onclick="openQAModal(event, 'MasterTables')" data-section="MasterTables">💬</div>
+        <button class="toggle-btn" id="toggle-MasterTables">▼</button>
+    </div>
+    <div class="section-content collapsed" id="MasterTables">
+        <div class="meeting-goals-container">
+            <div class="goals-item">
+                <div class="goals-number">1</div>
+                <div class="goals-text">IM - Costing Groups (Flw, HG, FG)</div>
+            </div>
+            <div class="goals-item">
+                <div class="goals-number">2</div>
+                <div class="goals-text">PO - Landed Costs</div>
+            </div>
+            <div class="goals-item">
+                <div class="goals-number">3</div>
+                <div class="goals-text">IM - Product Categories/ Material Cost Types</div>
+            </div>
+            <div class="goals-item">
+                <div class="goals-number">4</div>
+                <div class="goals-text">GL - Chart of Accounts</div>
+            </div>
+             <div class="goals-item">
+                <div class="goals-number">5</div>
+                <div class="goals-text">AP/AR - Vendors, Customers</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
          
 
      
@@ -3952,7 +3987,8 @@ function openQAModal(event, sectionId) {
         'Intacct' :'Intacct',
         'Agreements' : 'Agreements',
         'Screenshots' : 'Screenshots',
-        'Team' : 'Team'
+        'Team' : 'Team',
+        'MasterTables':'MasterTables'
     };
     
     title.textContent = `Q&A - ${sectionNames[sectionId] || sectionId}`;
@@ -4254,7 +4290,7 @@ function forceUpdateAllPendingCounts() {
             'meeting-agenda', 'historical-context', 'erp-integration', 
             'final-release', 'MeetingGoals', 'po-acceptance', 
             'inventory-management', 'production-reporting', 'order-entry', 
-            'three-way-match', 'month-end-close', 'Timeline','Intacct','Agreements','Screenshots','Team' 
+            'three-way-match', 'month-end-close', 'Timeline','Intacct','Agreements','Screenshots','Team', 'MasterTables' 
         ];
         
         sections.forEach(sectionId => {
@@ -4331,7 +4367,7 @@ function updateIconBadge(sectionId, count) {
 }
 
 function updateAllPendingCounts() {
-    const sections = ['meeting-agenda', 'historical-context', 'erp-integration', 'final-release', 'MeetingGoals', 'po-acceptance', 'inventory-management', 'production-reporting', 'order-entry', 'three-way-match', 'month-end-close', 'Timeline','Intacct','Agreements','Screenshots','Team'];
+    const sections = ['meeting-agenda', 'historical-context', 'erp-integration', 'final-release', 'MeetingGoals', 'po-acceptance', 'inventory-management', 'production-reporting', 'order-entry', 'three-way-match', 'month-end-close', 'Timeline','Intacct','Agreements','Screenshots','Team','MasterTables'];
     sections.forEach(sectionId => updatePendingCount(sectionId));
 }
 
@@ -4436,7 +4472,8 @@ function renderQASummary(allMessages) {
         'Intacct' : 'Intacct',
         'Agreements':'Agreements',
         'Screenshots':'Screenshots',
-        'Team':'Team'
+        'Team':'Team',
+        'MasterTables':'MasterTables'
     };
     
     // Questions and Answers Section
