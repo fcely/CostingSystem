@@ -5,8 +5,998 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WF-INTACCT</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+
+    <!--Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+
+
+
     <style>
-         /*Diseño*/
+/* Q&A Modal Styles */
+.qa-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+}
+
+.qa-modal-content {
+    background-color: white;
+    margin: 5% auto;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 800px;
+    height: 80vh;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.qa-modal-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 15px 15px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.qa-modal-header h3 {
+    margin: 0;
+    font-size: 1.4em;
+    font-weight: 600;
+}
+
+.qa-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.qa-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.qa-chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.qa-user-info {
+    padding: 15px 20px;
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.qa-user-avatar {
+    width: 35px;
+    height: 35px;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.qa-user-input {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    border-radius: 20px;
+    outline: none;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.qa-user-input:focus {
+    border-color: #3498db;
+}
+
+#qaMessages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+.qa-input-container {
+    background: white;
+    padding: 20px;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 15px 15px;
+}
+
+.qa-type-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    justify-content: center;
+}
+
+.qa-type-btn {
+    padding: 8px 16px;
+    border: 2px solid #e9ecef;
+    background: white;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 13px;
+    position: relative;
+}
+
+.qa-type-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);}
+
+.qa-type-btn.active {
+    background: #3498db;
+    border-color: #3498db;
+    color: white;
+}
+
+.qa-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.qa-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    outline: none;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+    resize: none;
+    min-height: 44px;
+    max-height: 120px;
+}
+
+.qa-input:focus {
+    border-color: #3498db;
+}
+
+.qa-send-btn {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.qa-send-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+}
+
+/* Message Styles */
+.qa-message {
+    margin-bottom: 15px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    max-width: 80%;
+    word-wrap: break-word;
+    position: relative;
+    animation: messageSlideIn 0.3s ease-out;
+    border: 2px solid transparent;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.qa-message.user {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+}
+
+.qa-message.other {
+    background: white;
+    border: 1px solid #e9ecef;
+    margin-right: auto;
+    border-bottom-left-radius: 4px;
+}
+
+.qa-message.note {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    border-left: 4px solid #2196f3;
+    color: #0d47a1;
+}
+
+.qa-message.note.user {
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+    color: white;
+    border-left: 4px solid #0d47a1;
+}
+
+.qa-message.note .qa-message-type {
+    background: rgba(33, 150, 243, 0.2);
+    color: #1976d2;
+}
+
+.qa-message.question .qa-message-type {
+    background: rgba(255, 152, 0, 0.2);
+    color: #f57c00;
+}
+
+.qa-message.answer .qa-message-type {
+    background: rgba(76, 175, 80, 0.2);
+    color: #388e3c;
+}
+
+.qa-message.user .qa-message-type {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.qa-message.question {
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    border-left: 4px solid #ff9800;
+    color: #e65100;
+    position: relative;
+}
+
+.qa-message.question.user {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    color: white;
+    border-left: 4px solid #e65100;
+}
+
+/* Answer Messages - Green Theme */
+.qa-message.answer {
+    background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+    border-left: 4px solid #4caf50;
+    color: #1b5e20;
+}
+
+.qa-message.answer.user {
+    background: linear-gradient(135deg, #4caf50, #388e3c);
+    color: white;
+    border-left: 4px solid #1b5e20;
+}
+
+.qa-message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.qa-message-user {
+    font-weight: bold;
+}
+
+/* Enhanced message type badges */
+.qa-message-type {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 9px;
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.qa-message-content {
+    font-size: 14px;
+    line-height: 1.4;
+}
+/* Special styling for answered questions */
+.qa-message.question.answered {
+    background: linear-gradient(135deg, #f1f8e9, #dcedc8);
+    border-left: 4px solid #8bc34a;
+    color: #33691e;
+}
+
+.qa-message.question.answered::before {
+    content: "✓ ANSWERED";
+    position: absolute;
+    top: -8px;
+    right: 8px;
+    background: #4caf50;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+/* Thread styling for replies */
+.qa-thread {
+    border-left: 3px solid #4caf50;
+    margin-left: 20px;
+    padding-left: 15px;
+    margin-top: 10px;
+    background: rgba(76, 175, 80, 0.05);
+    border-radius: 0 8px 8px 0;
+    padding-top: 10px;
+    padding-bottom: 5px;
+}
+
+.qa-thread .qa-message {
+    margin-bottom: 8px;
+    font-size: 13px;
+    max-width: 95%;
+}
+
+.qa-thread-indicator {
+    font-size: 10px;
+    color: #4caf50;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: bold;
+}
+
+.qa-thread-indicator::before {
+    content: "↳";
+    font-weight: bold;
+    font-size: 12px;
+}
+/* Enhanced QA Icon Styles with Better Pending Indicator */
+.qa-icon {
+    position: absolute;
+    right: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.qa-icon:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* Improved pending questions indicator */
+.qa-icon.has-pending {
+    position: absolute;
+    animation: iconPulse 2s infinite;
+}
+
+.qa-icon.has-pending::after {
+    content: attr(data-count);
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    border-radius: 50%;
+    min-width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.4);
+    animation: badgePulse 2s infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% { 
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4);
+    }
+    50% { 
+        box-shadow: 0 0 0 8px rgba(231, 76, 60, 0);
+    }
+}
+
+@keyframes badgePulse {
+    0%, 100% { 
+        transform: scale(1);
+    }
+    50% { 
+        transform: scale(1.1);
+    }
+}
+
+/* Summary Section Styles */
+.qa-summary-section {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.qa-summary-title {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #3498db;
+}
+
+.qa-section-group {
+    margin-bottom: 25px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.qa-section-group h4 {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    margin: 0;
+    padding: 12px 15px;
+    font-size: 14px;
+    color: #2c3e50;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.qa-question-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f1f2f6;
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.qa-question-item:last-child {
+    border-bottom: none;
+}
+
+.qa-question-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(2px);
+}
+
+.qa-question-item:not(.answered) {
+    background: linear-gradient(135deg, #fff3e0, #ffeaa7);
+    border-left-color: #ff9800;
+}
+
+.qa-question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.qa-question-user {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.qa-question-status {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.qa-question-status.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.qa-question-status.answered {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.qa-question-time {
+    color: #6c757d;
+    font-size: 11px;
+}
+
+.qa-question-text {
+    color: #495057;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .qa-modal-content {
+        margin: 0;
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+    }
+    
+    .qa-modal-header {
+        border-radius: 0;
+    }
+    
+    .qa-input-container {
+        border-radius: 0;
+    }
+    
+    .qa-icon {
+        right: 50px;
+        font-size: 18px;
+        padding: 6px;
+    }
+    
+    .qa-type-selector {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .qa-type-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+     .qa-icon.has-pending::after {
+        min-width: 18px;
+        height: 18px;
+        font-size: 10px;
+        top: -1px;
+        right: -1px;
+    }
+    
+    .qa-message {
+        max-width: 90%;
+        padding: 10px 12px;
+    }
+    
+    .qa-thread {
+        margin-left: 15px;
+        padding-left: 10px;
+    }
+}
+
+.qa-type-btn[data-type="note"] {
+    border-color: #2196f3;
+    color: #2196f3;
+}
+
+.qa-type-btn[data-type="note"].active {
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+    border-color: #2196f3;
+    color: white;
+}
+
+.qa-type-btn[data-type="question"] {
+    border-color: #ff9800;
+    color: #ff9800;
+}
+
+.qa-type-btn[data-type="question"].active {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    border-color: #ff9800;
+    color: white;
+}
+
+.qa-type-btn[data-type="answer"] {
+    border-color: #4caf50;
+    color: #4caf50;
+}
+
+.qa-type-btn[data-type="answer"].active {
+    background: linear-gradient(135deg, #4caf50, #388e3c);
+    border-color: #4caf50;
+    color: white;
+}
+
+/*Historical Context*/
+    .historical-timeline {
+      position: relative;
+      padding: 20px 0;
+    }
+
+    .historical-timeline::before {
+      content: '';
+      position: absolute;
+      width: 4px;
+      background: linear-gradient(to bottom, #667eea, #764ba2);
+      top: 0;
+      bottom: 0;
+      left: 120px;
+      border-radius: 2px;
+      box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin: 25px 0;
+      padding-left: 90px;
+      opacity: 0;
+      transform: translateX(-30px);
+      animation: slideInLeft 0.6s ease forwards;
+    }
+
+    .timeline-item:nth-child(odd) {
+      animation-delay: calc(var(--item-index, 0) * 0.1s);
+    }
+
+    .timeline-item:nth-child(even) {
+      animation-delay: calc(var(--item-index, 0) * 0.1s + 0.05s);
+    }
+
+    .year-badge {
+      position: absolute;
+      left: -105px;
+      top:20px;
+      transform: translateY(-50%);
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 25px;
+      font-weight: 700;
+      font-size: 14px;
+      min-width: 80px;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+      border: 3px solid white;
+      z-index: 2;
+      transition: all 0.3s ease;
+    }
+
+    .year-badge:hover {
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border: 4px solid white;
+      border-radius: 50%;
+      left: 105px;
+      top:20px;
+      margin-left: 5px;
+      transform: translateY(-50%);
+      box-shadow: 0 0 15px rgba(102, 126, 234, 0.4);
+      z-index: 3;
+      transition: all 0.3s ease;
+    }
+
+    .timeline-item:hover::before {
+      transform: translateY(-50%) scale(1.2);
+      box-shadow: 0 0 25px rgba(102, 126, 234, 0.6);
+    }
+
+    .content-box {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(102, 126, 234, 0.1);
+      position: relative;
+      transition: all 0.3s ease;
+      margin-left: 15px;
+    }
+
+    .content-box::before {
+      content: '';
+      position: absolute;
+      
+      top: 0px;
+      width: 0;
+      height: 0;
+      border: 15px solid transparent;
+      border-right-color: white;
+      z-index: 1;
+    }
+
+    .content-box:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+      border-color: rgba(102, 126, 234, 0.3);
+    }
+
+    .content-text {
+      color: #2c3e50;
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 0;
+      font-weight: 400;
+    }
+
+    .milestone-indicator {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.3s ease;
+      z-index: 7;
+    }
+
+    .timeline-item.milestone .milestone-indicator {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .timeline-item.milestone .year-badge {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+    }
+
+    .timeline-item.milestone::before {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+    }
+
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .section-content.expanded .timeline-item {
+      animation-play-state: running;
+    }
+
+    .section-content.collapsed .timeline-item {
+      animation-play-state: paused;
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+
+    @media (max-width: 768px) {
+      .section {
+        margin: 20px 10px;
+        border-radius: 15px;
+      }
+
+      .section-header {
+        padding: 20px;
+      }
+
+      .section-header h2 {
+        font-size: 24px;
+      }
+
+      .historical-timeline::before {
+        left: 52px;
+      }
+
+      .timeline-item {
+        padding-left: 70px;
+      }
+
+      .year-badge {
+        left: -15px;
+        min-width: 70px;
+        padding: 10px 12px;
+        font-size: 12px;
+      }
+
+      .timeline-item::before {
+        left: 21px;
+      }
+
+      .content-box {
+        margin-left: 15px;
+        padding: 20px;
+      }
+
+      .content-box::before {
+        left: -12px;
+        border-width: 12px;
+      }
+
+      .section-content.expanded {
+        padding: 20px;
+      }
+    }
+ 
+
+
+
+
+/*Meeting Goals Enhanced*/
+
+.meeting-goals-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 30px;
+    border-radius: 15px;
+    margin: 20px 0;
+}
+
+.goals-item {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    opacity: 0;
+    transform: translateX(-30px);
+    animation: slideInGoal 0.6s ease forwards;
+    transition: all 0.3s ease;
+}
+
+.goals-item:nth-child(1) { animation-delay: 0.1s; }
+.goals-item:nth-child(2) { animation-delay: 0.2s; }
+.goals-item:nth-child(3) { animation-delay: 0.3s; }
+.goals-item:nth-child(4) { animation-delay: 0.4s; }
+
+.goals-item:hover {
+    transform: translateX(10px);
+}
+
+.goals-number {
+    width: 45px;
+    height: 45px;
+    background: linear-gradient(135deg, #00ff73, #00cc5a);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
+    color: white;
+    font-weight: 700;
+    font-size: 18px;
+    box-shadow: 0 6px 20px rgba(0, 255, 115, 0.3);
+    border: 3px solid white;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.goals-number:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(0, 255, 115, 0.4);
+}
+
+.goals-text {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 18px 25px;
+    color: #2c3e50;
+    min-width: 300px;
+    flex: 1;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 1.4;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.goals-text::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border: 12px solid transparent;
+    border-right-color: rgba(255, 255, 255, 0.95);
+    z-index: 1;
+}
+
+.goals-text:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    border-color: rgba(0, 255, 115, 0.3);
+}
+
+@keyframes slideInGoal {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.section-content.expanded .goals-item {
+    animation-play-state: running;
+}
+
+.section-content.collapsed .goals-item {
+    animation-play-state: paused;
+    opacity: 0;
+    transform: translateX(-30px);
+}
+
+@media (max-width: 768px) {
+    .meeting-goals-container {
+        padding: 20px;
+    }
+    
+    .goals-number {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+        margin-right: 15px;
+    }
+    
+    .goals-text {
+        padding: 15px 20px;
+        min-width: 250px;
+        font-size: 15px;
+    }
+}
+
+/*end meeting goals enhanced*/
+
+        /*Diseño*/
 
         .list-item {
             position: absolute;
@@ -43,11 +1033,454 @@
 
         /*Diseño*/
 
+        /*timeline 2 */
+ .prjtimeline-container {
+      max-width: 800px;
+      width: 100%;
+      position: relative;
+    }
+
+    .prjtimeline-header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .prjtimeline-title {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      color: #2c3e50;
+      padding: 20px 40px;
+      border-radius: 15px;
+      font-size: 28px;
+      font-weight: 600;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .prjtimeline {
+      position: relative;
+      padding: 40px 20px;
+   
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+ 
+
+    }
+
+
+    /* Central timeline line */
+    .prjtimeline::before {
+      content: '';
+      position: absolute;
+      width: 4px;
+      background: linear-gradient(to bottom, #3498db, #9b59b6);
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 2px;
+      box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+    }
+
+    .prjtimeline-item {
+      position: relative;
+      margin: 30px 0;
+      width: 45%;
+      opacity: 0;
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    .prjtimeline-item:nth-child(odd) {
+      left: 0;
+      animation-delay: calc(var(--item-index) * 0.1s);
+    }
+
+    .prjtimeline-item:nth-child(even) {
+      left: 55%;
+      animation-delay: calc(var(--item-index) * 0.1s);
+    }
+
+    .prjtimeline-content {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .prjtimeline-content:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .prjtimeline-item.current .prjtimeline-content {
+      background: linear-gradient(135deg, #a8e6cf, #dcedc1);
+      border: 2px solid #27ae60;
+      box-shadow: 0 8px 32px rgba(39, 174, 96, 0.2);
+    }
+
+    .prjtimeline-item.completed .prjtimeline-content {
+      background: rgba(255, 255, 255, 0.8);
+      opacity: 0.9;
+    }
+
+    .prjtimeline-item.future .prjtimeline-content {
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px dashed rgba(155, 89, 182, 0.5);
+    }
+
+    /* Timeline dots */
+    .prjtimeline-item::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, #3498db, #9b59b6);
+      border: 4px solid white;
+      border-radius: 50%;
+      top: 35px;
+      box-shadow: 0 0 15px rgba(52, 152, 219, 0.4);
+      z-index: 2;
+      transition: all 0.3s ease;
+    }
+
+    .prjtimeline-item:nth-child(odd)::before {
+      right: -14px;
+    }
+
+    .prjtimeline-item:nth-child(even)::before {
+      left: -14px;
+    }
+
+    .prjtimeline-item.current::before {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      width: 24px;
+      height: 24px;
+      box-shadow: 0 0 20px rgba(39, 174, 96, 0.6);
+      animation: pulse 2s infinite;
+    }
+
+    .prjtimeline-item.current:nth-child(odd)::before {
+      right: -16px;
+    }
+
+    .prjtimeline-item.current:nth-child(even)::before {
+      left: -16px;
+    }
+
+    .prjtimeline-item.completed::before {
+      background: linear-gradient(135deg, #95a5a6, #bdc3c7);
+    }
+
+    .prjtimeline-item.future::before {
+      background: linear-gradient(135deg, #e74c3c, #f39c12);
+      opacity: 0.7;
+    }
+
+    /* Connection arrows */
+    .prjtimeline-item:nth-child(odd) .prjtimeline-content::after {
+      content: '';
+      position: absolute;
+      top: 35px;
+      right: -15px;
+      width: 0;
+      height: 0;
+      border: 15px solid transparent;
+      border-left-color: rgba(255, 255, 255, 0.95);
+      z-index: 1;
+    }
+
+    .prjtimeline-item:nth-child(even) .prjtimeline-content::after {
+      content: '';
+      position: absolute;
+      top: 35px;
+      left: -15px;
+      width: 0;
+      height: 0;
+      border: 15px solid transparent;
+      border-right-color: rgba(255, 255, 255, 0.95);
+      z-index: 1;
+    }
+
+    .prjtimeline-item.current:nth-child(odd) .prjtimeline-content::after {
+      border-left-color: #a8e6cf;
+    }
+
+    .prjtimeline-item.current:nth-child(even) .prjtimeline-content::after {
+      border-right-color: #a8e6cf;
+    }
+
+    .date {
+      font-weight: 700;
+      color: #2c3e50;
+      font-size: 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .date::before {
+      content: '📅';
+      font-size: 14px;
+    }
+
+    .description {
+      color: #34495e;
+      font-size: 15px;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    .status-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-completed {
+      background: #27ae60;
+      color: white;
+    }
+
+    .status-current {
+      background: #f39c12;
+      color: white;
+      animation: pulse 2s infinite;
+    }
+
+    .status-future {
+      background: #e74c3c;
+      color: white;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 20px 15px;
+      }
+      
+      .prjtimeline::before {
+        left: 30px;
+      }
+      
+      .prjtimeline-item,
+      .prjtimeline-item:nth-child(odd),
+      .prjtimeline-item:nth-child(even) {
+        left: 0;
+        width: calc(100% - 60px);
+        margin-left: 60px;
+      }
+      
+      .prjtimeline-item::before,
+      .prjtimeline-item:nth-child(odd)::before,
+      .prjtimeline-item:nth-child(even)::before,
+      .prjtimeline-item.current:nth-child(odd)::before,
+      .prjtimeline-item.current:nth-child(even)::before {
+        left: -44px;
+        right: auto;
+      }
+      
+      .prjtimeline-content::after,
+      .prjtimeline-item:nth-child(odd) .prjtimeline-content::after,
+      .prjtimeline-item:nth-child(even) .prjtimeline-content::after {
+        left: -15px;
+        right: auto;
+        border: 15px solid transparent;
+        border-right-color: rgba(255, 255, 255, 0.95);
+        border-left-color: transparent;
+      }
+      
+      .prjtimeline-item.current .prjtimeline-content::after {
+        border-right-color: #a8e6cf;
+      }
+      
+      .prjtimeline-title {
+        font-size: 24px;
+        padding: 15px 25px;
+      }
+    }
+
+        /*timeline*/
+
+         .timeline-container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            animation: fadeInUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .timeline-item:nth-child(1) { animation-delay: 0.1s; }
+        .timeline-item:nth-child(2) { animation-delay: 0.2s; }
+        .timeline-item:nth-child(3) { animation-delay: 0.3s; }
+        .timeline-item:nth-child(4) { animation-delay: 0.4s; }
+        .timeline-item:nth-child(5) { animation-delay: 0.5s; }
+        .timeline-item:nth-child(6) { animation-delay: 0.6s; }
+        .timeline-item:nth-child(7) { animation-delay: 0.7s; }
+        .timeline-item:nth-child(8) { animation-delay: 0.8s; }
+
+        .year-badge {
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 14px;
+            min-width: 60px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+            position: relative;
+            z-index: 2;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .year-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+        }
+
+        .content-box {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-left: 24px;
+            flex: 1;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .content-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .content-box::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 20px;
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-right: 8px solid rgba(255, 255, 255, 0.95);
+        }
+
+        .content-text {
+            color: #2c3e50;
+            line-height: 1.6;
+            font-size: 15px;
+            margin: 0;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 50px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, 
+                rgba(255, 255, 255, 0.8) 0%, 
+                rgba(255, 255, 255, 0.4) 50%, 
+                rgba(255, 255, 255, 0.2) 100%);
+            z-index: 1;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .title {
+            text-align: center;
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 50px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .timeline-container {
+                padding: 0 10px;
+            }
+            
+            .year-badge {
+                min-width: 50px;
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .content-box {
+                margin-left: 16px;
+                padding: 16px 20px;
+            }
+            
+            .title {
+                font-size: 2rem;
+                margin-bottom: 30px;
+            }
+        }
+
+        /*end time line*/
+
         
          .erp-integration-container {
             position: relative;
             width: 100%;
-            height: 600px;
+            height: 700px;
             margin-bottom: 30px;
             background: #f8f9fa;
             border-radius: 10px;
@@ -241,7 +1674,7 @@
         }
         
         .erp-report-category li:before {
-            content: "•";
+            content: "-";
             color: #3498db;
             font-weight: bold;
             position: absolute;
@@ -251,7 +1684,7 @@
         .erp-legend {
             position: absolute;
             top: 20px;
-            right: 20px;
+            left: 20px;
             background: rgba(248, 249, 250, 0.95);
             border: 2px solid #dee2e6;
             border-radius: 12px;
@@ -294,6 +1727,7 @@
             margin: 0;
             padding: 10px;
             background-image: url("https://kendalfloral.com/wp-content/uploads/2020/02/Kendal2235-copy-1.jpg");
+            background-color: #d8eec9;
             background-attachment: fixed;
             background-size: cover;
         }
@@ -326,16 +1760,16 @@
         }
         
         .section {
-            margin-bottom: 40px;
+            margin-bottom: 10px;
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         
         .section-header {
-            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);;
             color: white;
-            padding: 20px;
+            padding: 5px;
             cursor: pointer;
             position: relative;
             transition: all 0.3s ease;
@@ -798,16 +2232,17 @@
         
         <div class="content">
 
-               <!-- Meeting Agenda Section -->
+                   <!-- Meeting Agenda Section -->
             <div class="section">
                 <div class="section-header" onclick="toggleSection('meeting-agenda')">
-                    <h2>Project Implementation Meeting Agenda</h2>
+                    <h2>Meeting Agenda</h2>
+                    <div class="qa-icon" onclick="openQAModal(event, 'meeting-agenda')" data-section="meeting-agenda">💬</div>
                     <button class="toggle-btn" id="toggle-meeting-agenda">▼</button>
                 </div>
-                <div class="section-content" id="meeting-agenda">
+                <div class="section-content collapsed" id="meeting-agenda" >
                     <div class="key-benefits">
                         <h4>Strategic Goal</h4>
-                        <p>To integrate WebFlowers with Intacct to simplify cross-system operations, decommission Macola, ensure accurate cost and inventory control, and streamline processes for greater speed and efficiency — with an open scope that allows for flexibility and future enhancements. Aiming to have a modern Fully Integrated ERP</p>
+                        <p>To integrate WebFlowers with Intacct to simplify cross-system operations, decommission Macola, ensure accurate cost and inventory control, and streamline processes for greater speed and efficiency - with an open scope that allows for flexibility and future enhancements. Aiming to have a modern Fully Integrated ERP</p>
                     </div>
                     
                     <div class="agenda-container">
@@ -965,11 +2400,19 @@
                                 </tr>
                                 <tr>
                                     <td>2025-07-31</td>
-                                    <td>10:45 – 12:00</td>
-                                    <td>12. Reporting & Data Warehouse</td>
-                                    <td>Short-term report continuity, DW transition, future handoff to VU. (Jose)</td>
-                                    <td>Vender la idea y beneficios de mover todo a VU</td>
+                                    <td>10:45 – 11:00</td>
+                                    <td>12. Reporting, VU </td>
+                                    <td>Report continuity,future handoff to VU. (Jose) </td>
+                                    <td></td>
                                 </tr>
+                                 <tr>
+                                    <td>2025-07-31</td>
+                                    <td>11:00 – 12:00</td>
+                                    <td>13. Intacct Rollout Planning</td>
+                                    <td>AP/AR go-live plan, UAT schedule, training support needs. (Alejandra,Tomas)</td>
+                                    <td></td>
+                                </tr>
+
                                 <tr class="break-row">
                                     <td>2025-07-31</td>
                                     <td>12:00 – 1:00</td>
@@ -984,71 +2427,127 @@
                                     <td>Open discussion, gap identification, resource needs.</td>
                                     <td>Anna</td>
                                 </tr>
-                                
-                                <tr class="day-header">
-                                    <td colspan="5"><strong>August 1, 2025 - Day 5: Finalization</strong></td>
-                                </tr>
+
                                 <tr>
-                                    <td>2025-08-01</td>
-                                    <td>9:00 – 10:30</td>
-                                    <td>13. Intacct Rollout Planning</td>
-                                    <td>AP/AR go-live plan, UAT schedule, training support needs. (Alejandra,Tomas)</td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td>2025-08-01</td>
-                                    <td>10:30 – 12:00</td>
+                                    <td>2025-07-31</td>
+                                    <td>2:00 – 3:00</td>
                                     <td>Final Wrap-Up</td>
                                     <td>Confirm commitments, align on communication plans and next steps.</td>
                                     <td>Anna - Luis</td>
                                 </tr>
+                                
+                                                             
+                                
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-              <!-- Context -->
 
-            <div class="section">
-                <div class="section-header" onclick="toggleSection('Context')">
-                    <h2>Context</h2>
-                    <button class="toggle-btn" id="toggle-Context">â–¼</button>
-                </div>
-                <div class="section-content" id="Context">
-                    <div class="erp-integration-container" style="height: 800px;">
-                        <img src="img/Contexto.png" alt="">
-                    </div>
-                </div>
-            </div>
+
+               <!-- Context -->
+
+           <div class="section">
+    <div class="section-header" onclick="toggleSection('historical-context')">
+      <h2>Historical Context</h2>
+      <div class="qa-icon" onclick="openQAModal(event, 'historical-context')" data-section="historical-context">💬</div>
+      <button class="toggle-btn" id="toggle-historical-context">▼</button>
+    </div>
+       
+    <div class="section-content collapsed" id="historical-context">
+      <div class="historical-timeline">
+        <div class="timeline-item" style="--item-index: 1">
+          <div class="year-badge">2008</div>
+          <div class="content-box">
+            <p class="content-text">WebFlowers was implemented at Monterey Bay, marking the beginning of our digital transformation journey.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item milestone" style="--item-index: 2">
+          <div class="milestone-indicator">Milestone</div>
+          <div class="year-badge">2010</div>
+          <div class="content-box">
+            <p class="content-text">Implementation was completed at the Kendal's site. During this period, dual data entry was required in both WebFlowers and Macola.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item" style="--item-index: 3">
+          <div class="year-badge">2011</div>
+          <div class="content-box">
+            <p class="content-text">Discussions around a potential system integration project began, laying the groundwork for future unification efforts.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item" style="--item-index: 4">
+          <div class="year-badge">2012</div>
+          <div class="content-box">
+            <p class="content-text">The integration process was paused due to strategic reassessment and resource allocation considerations.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item milestone" style="--item-index: 5">
+          <div class="milestone-indicator">Achievement</div>
+          <div class="year-badge">2014-2017</div>
+          <div class="content-box">
+            <p class="content-text">Dual data entry between WebFlowers and Macola was eliminated through internal development on the West Coast, significantly improving operational efficiency.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item" style="--item-index: 6">
+          <div class="year-badge">2019</div>
+          <div class="content-box">
+            <p class="content-text">"Exact" sold Macola to ECI. Alternative systems were evaluated to replace Macola. The West Coast team recommended NetSuite, as Intacct did not offer any manufacturing modules.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item milestone" style="--item-index: 7">
+          <div class="milestone-indicator">Decision</div>
+          <div class="year-badge">2022</div>
+          <div class="content-box">
+            <p class="content-text">The decision was made to align the companies' organizational strategy and to develop the Costing System modules within WebFlowers.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item milestone" style="--item-index: 8">
+          <div class="milestone-indicator">Launch</div>
+          <div class="year-badge">2023</div>
+          <div class="content-box">
+            <p class="content-text">Expectations were unified, marking the beginning of the official new project development phase and setting the stage for comprehensive system integration.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
             
 
-               <!-- Project Timeline Section -->
-            <div class="section">
-                <div class="section-header" onclick="toggleSection('Timeline')">
-                    <h2>Project TimeLine</h2>
-                    <button class="toggle-btn" id="toggle-Timeline">â–¼</button>
-                </div>
-                <div class="section-content" id="Timeline">
-                    <div class="erp-integration-container" style="height: 1250px;">
-                        <img src="img/Timeline.png" alt="">
-                    </div>
-                </div>
-            </div>
+           
 
              <!-- ERP Integration Chart Section -->
             <div class="section">
                 <div class="section-header" onclick="toggleSection('erp-integration')">
-                    <h2>Web Flowers & Intacct ERP Integration</h2>
-                    <button class="toggle-btn" id="toggle-erp-integration">â–¼</button>
+                    <h2>WebFlowers - Macola (Current Architecture)</h2>
+                    <div class="qa-icon" onclick="openQAModal(event, 'erp-integration')" data-section="erp-integration">💬</div>
+                    <button class="toggle-btn" id="toggle-erp-integration">▼</button>
                 </div>
-                <div class="section-content" id="erp-integration">
+                <div class="section-content collapsed" id="erp-integration">
                     <div class="erp-integration-container">
                         <div class="diagram-title">Initial status</div>
                         <p style="text-align: center; margin: 0px; ">It does not allow the unification of accounting in Intacct for the companies in the United States.</p>
                         <img src="img/img wf intacct.png" alt="">
                     </div>
-                    
+
+                </div>
+            </div>
+                
+        <div class="section">
+        <div class="section-header" onclick="toggleSection('final-release')">
+            <h2>WebFlowers - Intacct (Future Architecture)</h2>
+            <div class="qa-icon" onclick="openQAModal(event, 'final-release')" data-section="final-release">💬</div>
+            <button class="toggle-btn" id="toggle-final-release">▼</button>
+        </div>
+
+                <div class="section-content collapsed" id="final-release">
                     <div class="erp-integration-container">
                         <div class="diagram-title">Final release</div>
                         <!--Diseño -->
@@ -1147,7 +2646,7 @@
                             
                             <div class="erp-module system-erp-module erp-vu-warehouse">
                                 <div style="margin-bottom: 4px;">VU - Business Intelligence Data Warehouse</div>
-                                <div style="font-size: 11px; opacity: 0.9;">Dashboards â€¢ Reports â€¢ Analytics â€¢ Data Integration</div>
+                                <div style="font-size: 11px; opacity: 0.9;">Dashboards - Reports - Analytics -Data Integration</div>
                             </div>
                         </div>  
                         
@@ -1183,134 +2682,8 @@
                             <img src="img/wf.png" alt="">
                              <img src="img/image 19.png" alt="">
                         </div>
-                    </div>                    
-                    <div class="erp-reports-section">
-                        <div class="erp-reports-title">Financial Reports & Analytics</div>
-                        <div class="erp-reports-grid">
-                            <div class="erp-report-category">
-                                <h4>Core Financial Reports</h4>
-                                <ul>
-                                    <li>P&L Statement</li>
-                                    <li>Balance Sheet</li>
-                                    <li>Cash Flow Statement</li>
-                                    <li>Trial Balance</li>
-                                    <li>General Ledger Detail</li>
-                                    <li>Budget vs Actual</li>
-                                    <li>Variance Analysis</li>
-                                    <li>Financial Ratios</li>
-                                    <li>Aged A/R & A/P</li>
-                                    <li>Bank Reconciliation</li>
-                                </ul>
-                            </div>
-                            <div class="erp-report-category">
-                                <h4>Flower Operations Reports</h4>
-                                <ul>
-                                    <li>Flower Procurement Cost Analysis</li>
-                                    <li>Production Order Profitability</li>
-                                    <li>Fresh Inventory Turnover</li>
-                                    <li>Bill of Materials Costing</li>
-                                    <li>Order Entry Performance</li>
-                                    <li>Landed Cost per Unit</li>
-                                    <li>Vendor Performance Metrics</li>
-                                    <li>Quality Control Reports</li>
-                                    <li>Seasonal Trend Analysis</li>
-                                    <li>Waste & Spoilage Tracking</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Meeting Goals -->
-            <div class="section">
-                <div class="section-header" onclick="toggleSection('MeetingGoals')">
-                    <h2>Meeting Goals</h2>
-                    <button class="toggle-btn" id="toggle-MeetingGoals">â–¼</button>
-                </div>
-                <div class="section-content" id="MeetingGoals">
-                    <div class="erp-integration-container" style="height: 500px;">
-                        <img src="img/meetingGoals.png" alt="">
-                    </div>
-                </div>
-            </div>
-
-
-
-
-
-
-
-
-
-<!-- REvisar el siguiente y eliminar -->
-             <!-- ERP Integration Chart Section -->
-            <div class="section">
-                <div class="section-header" onclick="toggleSection('erp-integration')">
-                    <h2>Web Flowers & Intacct ERP Integration</h2>
-                    <button class="toggle-btn" id="toggle-erp-integration">▼</button>
-                </div>
-                <div class="section-content" id="erp-integration">
-                    <div class="erp-integration-container">
-                        <!-- Web Flowers Modules -->
-                        <div class="erp-module wf-erp-module erp-oe">OE</div>
-                        <div class="erp-module wf-erp-module erp-bom">BOM</div>
-                        <div class="erp-module wf-erp-module erp-pop">POP</div>
-                        <div class="erp-module wf-erp-module erp-im">IM</div>
-                        <div class="erp-module wf-erp-module erp-po-lc">PO+LC</div>
-                        
-                        <!-- Intacct Modules -->
-                        <div class="erp-module intacct-erp-module erp-gl central-erp-hub">GL</div>
-                        <div class="erp-module intacct-erp-module erp-cm">CM</div>
-                        <div class="erp-module intacct-erp-module erp-ad">AD</div>
-                        <div class="erp-module intacct-erp-module erp-ar">AR</div>
-                        <div class="erp-module intacct-erp-module erp-ap">AP</div>
-                        <div class="erp-module intacct-erp-module erp-pr">PR</div>
-                        <div class="erp-module intacct-erp-module erp-bb">BB</div>
-                        
-                        <!-- System Modules -->
-                        <div class="erp-module system-erp-module erp-master-tables">
-                            <div style="font-size: 11px; margin-bottom: 3px;">Master Tables</div>
-                            <div style="font-size: 8px; opacity: 0.9;">Vendors, Customers, Chart of Accounts</div>
-                        </div>
-                        
-                        <div class="erp-module system-erp-module erp-budget-system">
-                            <div style="font-size: 11px; margin-bottom: 3px;">Budget System</div>
-                            <div style="font-size: 8px; opacity: 0.9;">Planning & Forecasting</div>
-                        </div>
-                        
-                        <div class="erp-module system-erp-module erp-vu-warehouse">
-                            <div style="margin-bottom: 4px;">VU - Business Intelligence Data Warehouse</div>
-                            <div style="font-size: 11px; opacity: 0.9;">Dashboards • Reports • Analytics • Data Integration</div>
-                        </div>
-                        
-                        <!-- Connection Lines -->
-                        <div class="erp-connection-line erp-data-flow" style="top: 152px; left: 225px; width: 75px;"></div>
-                        <div class="erp-arrow erp-arrow-red" style="top: 175px; left: 428px;"></div>
-                        
-                        <!-- Integration Flows -->
-                        <div class="erp-connection-line erp-data-flow" style="top: 75px; left: 225px; width: 35px;"></div>
-                        <div class="erp-arrow erp-arrow-red" style="top: 115px; left: 275px;"></div>
-                        
-                        <div class="erp-connection-line erp-data-flow" style="top: 228px; left: 225px; width: 35px;"></div>
-                        <div class="erp-arrow erp-arrow-red" style="top: 226px; left: 300px;"></div>
-                        
-                        <div class="erp-legend">
-                            <h4>Legend</h4>
-                            <div class="erp-legend-item">
-                                <div class="erp-legend-color" style="background: linear-gradient(135deg, #f9f871 0%, #e6d435 100%); border-color: #d4b429;"></div>
-                                Web Flowers
-                            </div>
-                            <div class="erp-legend-item">
-                                <div class="erp-legend-color" style="background: linear-gradient(135deg, #b3d9ff 0%, #7fc4ff 100%); border-color: #5ba3d0;"></div>
-                                Intacct
-                            </div>
-                            <div class="erp-legend-item">
-                                <div class="erp-legend-line" style="background: #e74c3c; height: 4px;"></div>
-                                Data Integration
-                            </div>
-                        </div>
-                    </div>
+                    </div>     
+                
                     
                     <div class="erp-reports-section">
                         <div class="erp-reports-title">Financial Reports & Analytics</div>
@@ -1318,16 +2691,16 @@
                             <div class="erp-report-category">
                                 <h4>Core Financial Reports</h4>
                                 <ul>
-                                    <li>P&L Statement</li>
-                                    <li>Balance Sheet</li>
-                                    <li>Cash Flow Statement</li>
-                                    <li>Trial Balance</li>
-                                    <li>General Ledger Detail</li>
-                                    <li>Budget vs Actual</li>
-                                    <li>Variance Analysis</li>
-                                    <li>Financial Ratios</li>
-                                    <li>Aged A/R & A/P</li>
-                                    <li>Bank Reconciliation</li>
+                                    <li> P&L Statement</li>
+                                    <li> Balance Sheet</li>
+                                    <li> Cash Flow Statement</li>
+                                    <li> Trial Balance</li>
+                                    <li> General Ledger Detail</li>
+                                    <li> Budget vs Actual</li>
+                                    <li> Variance Analysis</li>
+                                    <li> Financial Ratios</li>
+                                    <li> Aged A/R & A/P</li>
+                                    <li> Bank Reconciliation</li>
                                 </ul>
                             </div>
                             <div class="erp-report-category">
@@ -1345,18 +2718,68 @@
                                     <li>Waste & Spoilage Tracking</li>
                                 </ul>
                             </div>
+                          <div class="erp-report-category">
+                                <h4>Flower Operations Reports</h4>
+                                <ul>
+                                    <li>Flower Procurement Cost Analysis</li>
+                                    <li>Production Order Profitability</li>
+                                    <li>Fresh Inventory Turnover</li>
+                                    <li>Bill of Materials Costing</li>
+                                    <li>Order Entry Performance</li>
+                                    <li>Landed Cost per Unit</li>
+                                    <li>Vendor Performance Metrics</li>
+                                    <li>Quality Control Reports</li>
+                                    <li>Seasonal Trend Analysis</li>
+                                    <li>Waste & Spoilage Tracking</li>
+                                </ul>
+                            </div>   
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Meeting Goals Enhanced -->
+<div class="section">
+    <div class="section-header" onclick="toggleSection('MeetingGoals')">
+        <h2>Meeting Goals</h2>
+        <div class="qa-icon" onclick="openQAModal(event, 'MeetingGoals')" data-section="MeetingGoals">💬</div>
+        <button class="toggle-btn" id="toggle-MeetingGoals">▼</button>
+    </div>
+    <div class="section-content collapsed" id="MeetingGoals">
+        <div class="meeting-goals-container">
+            <div class="goals-item">
+                <div class="goals-number">1</div>
+                <div class="goals-text">Review current project status and completed milestones</div>
+            </div>
+            <div class="goals-item">
+                <div class="goals-number">2</div>
+                <div class="goals-text">Provide comprehensive basic training on new system features</div>
+            </div>
+            <div class="goals-item">
+                <div class="goals-number">3</div>
+                <div class="goals-text">Prepare and validate sandbox environment for go-live testing</div>
+            </div>
+            <div class="goals-item">
+                <div class="goals-number">4</div>
+                <div class="goals-text">Establish clear agreements on responsibilities and define next steps</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+         
+
+     
+
             <!-- PO Acceptance Section -->
             <div class="section">
                 <div class="section-header" onclick="toggleSection('po-acceptance')">
                     <h2>PO Acceptance Process</h2>
+                    <div class="qa-icon" onclick="openQAModal(event, 'po-acceptance')" data-section="po-acceptance">💬</div>
                     <button class="toggle-btn" id="toggle-po-acceptance">▼</button>
                 </div>
-                <div class="section-content" id="po-acceptance">
+                <div class="section-content collapsed" id="po-acceptance">
                     <div class="key-benefits">
                         <h4>Key Benefits</h4>
                         <ul>
@@ -1399,72 +2822,54 @@
                 </div>
             </div>
             
-            <!-- Three-Way Match Section -->
+             <!-- Inventory Management Section -->
             <div class="section">
-                <div class="section-header" onclick="toggleSection('three-way-match')">
-                    <h2>PO/AP Three-Way Match Process</h2>
-                    <button class="toggle-btn" id="toggle-three-way-match">▼</button>
+                <div class="section-header" onclick="toggleSection('inventory-management')">
+                    <h2>IM - Inventory Management</h2>
+                    <div class="qa-icon" onclick="openQAModal(event, 'inventory-management')" data-section="inventory-management">💬</div>
+                    <button class="toggle-btn" id="toggle-inventory-management">▼</button>
                 </div>
-                <div class="section-content" id="three-way-match">
+                <div class="section-content collapsed" id="inventory-management">
                     <div class="key-benefits">
-                        <h4>Process Overview</h4>
+                        <h4>Transaction Types</h4>
                         <ul>
-                            <li>AP/Production Clerk verifies <strong>Invoice, PO, and Receipt</strong> before posting</li>
-                            <li>Records Purchase Price Variance (PPV) and freight differences</li>
-                            <li>Transaction pushed to Intacct for final processing</li>
-                            <li>Provides simple Landed Cost AP processing</li>
-                            <li>Pulls information from related parties to simplify operations</li>
+                            <li><strong>Adjustments:</strong> Quantity and value corrections</li>
+                            <li><strong>Issues:</strong> Inventory consumption tracking</li>
+                            <li><strong>Receipts:</strong> Inventory additions</li>
+                            <li><strong>Transfers:</strong> Location-to-location movements</li>
                         </ul>
                     </div>
                     
                     <div class="diagram-container">
-                        <div class="diagram-title">Three-Way Match Transaction Flow</div>
-                        <svg id="three-way-sankey" width="800" height="400"></svg>
-                    </div>
-                    
-                    <div class="journal-entries">
-                        <h4>Workflow Journal Entries</h4>
-                        <div class="entry-item">
-                            <span class="debit">D - Purchases Clearing</span>
-                            <span>Clear purchase obligations</span>
-                        </div>
-                        <div class="entry-item">
-                            <span>C/D - Variance Accounts</span>
-                            <span>Record PPV and freight differences</span>
-                        </div>
-                        <div class="entry-item">
-                            <span class="credit">C - AP WF to Intacct Transfer</span>
-                            <span>Transfer to Intacct system</span>
-                        </div>
-                    </div>
-                    
-                    <div class="journal-entries">
-                        <h4>Intacct Journal Entries</h4>
-                        <div class="entry-item">
-                            <span class="debit">D - Purchases Clearing</span>
-                            <span>Mirror WF clearing entry</span>
-                        </div>
-                        <div class="entry-item">
-                            <span class="credit">C - AP WF to Intacct Transfer</span>
-                            <span>Complete transfer process</span>
-                        </div>
-                        <p><em>Transaction details are stored in notes for audit trail</em></p>
+                        <div class="diagram-title">Inventory Management Transaction Flow</div>
+                        <svg id="inventory-sankey" width="800" height="350"></svg>
                     </div>
                     
                     <div class="process-step">
-                        <h4>Daily/ Month-End Reconciliation</h4>
-                        <p>At month-end, a reconciliation process creates clearing entries in both WF and Intacct to zero out the AP WF to Intacct Transfer accounts, ensuring clean month-end balances. However a Daily Reconciliation will exist via a tool</p>
+                        <h4>System Capabilities</h4>
+                        <p>Adjusts inventory quantities, costs, and GL accounts based on user input, similar to Macola functionality. Serves as foundation for future enhancements like TA module integration and approval workflows.</p>
+                    </div>
+                    
+                    <div class="future-enhancements">
+                        <h4>Future Enhancements</h4>
+                        <ul>
+                            <li>TA module integration for advanced analytics</li>
+                            <li>Approval workflows for inventory transactions</li>
+                            <li>Enhanced reporting capabilities</li>
+                        </ul>
                     </div>
                 </div>
             </div>
+          
             
             <!-- Production Reporting Section -->
             <div class="section">
                 <div class="section-header" onclick="toggleSection('production-reporting')">
                     <h2>POP - Production Reporting</h2>
+                    <div class="qa-icon" onclick="openQAModal(event, 'production-reporting')" data-section="production-reporting">💬</div>
                     <button class="toggle-btn" id="toggle-production-reporting">▼</button>
                 </div>
-                <div class="section-content" id="production-reporting">
+                <div class="section-content collapsed" id="production-reporting">
                     <div class="key-benefits">
                         <h4>Process Controls</h4>
                         <ul>
@@ -1511,9 +2916,10 @@
             <div class="section">
                 <div class="section-header" onclick="toggleSection('order-entry')">
                     <h2>OE - Order Entry & Invoicing</h2>
+                    <div class="qa-icon" onclick="openQAModal(event, 'order-entry')" data-section="order-entry">💬</div>
                     <button class="toggle-btn" id="toggle-order-entry">▼</button>
                 </div>
-                <div class="section-content" id="order-entry">
+                <div class="section-content collapsed" id="order-entry">
                     <div class="key-benefits">
                         <h4>Process Overview</h4>
                         <ul>
@@ -1580,52 +2986,78 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Inventory Management Section -->
+
+
+              <!-- Three-Way Match Section -->
             <div class="section">
-                <div class="section-header" onclick="toggleSection('inventory-management')">
-                    <h2>IM - Inventory Management</h2>
-                    <button class="toggle-btn" id="toggle-inventory-management">▼</button>
+                <div class="section-header" onclick="toggleSection('three-way-match')">
+                    <h2>PO/AP Three-Way Match Process</h2>
+                    <div class="qa-icon" onclick="openQAModal(event, 'three-way-match')" data-section="three-way-match">💬</div>
+                    <button class="toggle-btn" id="toggle-three-way-match">▼</button>
                 </div>
-                <div class="section-content" id="inventory-management">
+                <div class="section-content collapsed" id="three-way-match">
                     <div class="key-benefits">
-                        <h4>Transaction Types</h4>
+                        <h4>Process Overview</h4>
                         <ul>
-                            <li><strong>Adjustments:</strong> Quantity and value corrections</li>
-                            <li><strong>Issues:</strong> Inventory consumption tracking</li>
-                            <li><strong>Receipts:</strong> Inventory additions</li>
-                            <li><strong>Transfers:</strong> Location-to-location movements</li>
+                            <li>AP/Production Clerk verifies <strong>Invoice, PO, and Receipt</strong> before posting</li>
+                            <li>Records Purchase Price Variance (PPV) and freight differences</li>
+                            <li>Transaction pushed to Intacct for final processing</li>
+                            <li>Provides simple Landed Cost AP processing</li>
+                            <li>Pulls information from related parties to simplify operations</li>
                         </ul>
                     </div>
                     
                     <div class="diagram-container">
-                        <div class="diagram-title">Inventory Management Transaction Flow</div>
-                        <svg id="inventory-sankey" width="800" height="350"></svg>
+                        <div class="diagram-title">Three-Way Match Transaction Flow</div>
+                        <svg id="three-way-sankey" width="800" height="400"></svg>
+                    </div>
+                    
+                    <div class="journal-entries">
+                        <h4>Workflow Journal Entries</h4>
+                        <div class="entry-item">
+                            <span class="debit">D - Purchases Clearing</span>
+                            <span>Clear purchase obligations</span>
+                        </div>
+                        <div class="entry-item">
+                            <span>C/D - Variance Accounts</span>
+                            <span>Record PPV and freight differences</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="credit">C - AP WF to Intacct Transfer</span>
+                            <span>Transfer to Intacct system</span>
+                        </div>
+                    </div>
+                    
+                    <div class="journal-entries">
+                        <h4>Intacct Journal Entries</h4>
+                        <div class="entry-item">
+                            <span class="debit">D - Purchases Clearing</span>
+                            <span>Mirror WF clearing entry</span>
+                        </div>
+                        <div class="entry-item">
+                            <span class="credit">C - AP WF to Intacct Transfer</span>
+                            <span>Complete transfer process</span>
+                        </div>
+                        <p><em>Transaction details are stored in notes for audit trail</em></p>
                     </div>
                     
                     <div class="process-step">
-                        <h4>System Capabilities</h4>
-                        <p>Adjusts inventory quantities, costs, and GL accounts based on user input, similar to Macola functionality. Serves as foundation for future enhancements like TA module integration and approval workflows.</p>
-                    </div>
-                    
-                    <div class="future-enhancements">
-                        <h4>Future Enhancements</h4>
-                        <ul>
-                            <li>TA module integration for advanced analytics</li>
-                            <li>Approval workflows for inventory transactions</li>
-                            <li>Enhanced reporting capabilities</li>
-                        </ul>
+                        <h4>Daily/ Month-End Reconciliation</h4>
+                        <p>At month-end, a reconciliation process creates clearing entries in both WF and Intacct to zero out the AP WF to Intacct Transfer accounts, ensuring clean month-end balances. However a Daily Reconciliation will exist via a tool</p>
                     </div>
                 </div>
             </div>
+            
+           
             
             <!-- Month-End Close Section -->
             <div class="section">
                 <div class="section-header" onclick="toggleSection('month-end-close')">
                     <h2>IM - Month-End Close Process</h2>
+                    <div class="qa-icon" onclick="openQAModal(event, 'month-end-close')" data-section="month-end-close">💬</div>
                     <button class="toggle-btn" id="toggle-month-end-close">▼</button>
                 </div>
-                <div class="section-content" id="month-end-close">
+                <div class="section-content collapsed" id="month-end-close">
                     <div class="key-benefits">
                         <h4>Process Overview</h4>
                         <ul>
@@ -1679,10 +3111,226 @@
                     </div>
                 </div>
             </div>
+
+            
+       <!-- Project Timeline Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('Timeline')">
+                    <h2>Project TimeLine</h2>
+                    <div class="qa-icon" onclick="openQAModal(event, 'TimeLine')" data-section="TimeLine">💬</div>
+                    <button class="toggle-btn" id="toggle-Timeline">▼</button>
+                </div>
+                <div class="section-content collapsed" id="Timeline">
+                  
+ 
+
+                    <div class="prjtimeline-container">
+   
+    
+    <div class="prjtimeline">
+      <div class="prjtimeline-item completed" style="--item-index: 1">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-completed">Completed</div>
+          <div class="date">Oct. 2022</div>
+          <div class="description">Project Kick off.</div>
+        </div>
+      </div>
+      
+      <div class="prjtimeline-item completed" style="--item-index: 2">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-completed">Completed</div>
+          <div class="date">Dec. 2023</div>
+          <div class="description">Landed cost implementation and optimization.</div>
+        </div>
+      </div>
+      
+      <div class="prjtimeline-item completed" style="--item-index: 3">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-completed">Completed</div>
+          <div class="date">Apr. 2024</div>
+          <div class="description">Inventory management system deployment.</div>
+        </div>
+      </div>
+      
+      <div class="prjtimeline-item completed" style="--item-index: 4">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-completed">Completed</div>
+          <div class="date">Sep. 2024</div>
+          <div class="description">Production reporting framework established.</div>
+        </div>
+      </div>
+      
+      <div class="prjtimeline-item completed" style="--item-index: 5">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-completed">Completed</div>
+          <div class="date">Mar. 2025</div>
+          <div class="description">Accounts payable integration completed.</div>
+        </div>
+      </div>
+      
+      <div class="prjtimeline-item completed" style="--item-index: 6">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-completed">Completed</div>
+          <div class="date">Jun. 2025</div>
+          <div class="description">Location concept development finalized.</div>
+        </div>
+      </div>
+      
+      <div class="prjtimeline-item completed" style="--item-index: 7">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-completed">Completed</div>
+          <div class="date">Jul. 2025</div>
+          <div class="description">Physical count end-of-month prototype delivered.</div>
+        </div>
+      </div>
+      
+      <div class="prjtimeline-item current" style="--item-index: 8">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-current">In Progress</div>
+          <div class="date">Jul.-Aug. 2025</div>
+          <div class="description">West Coast stakeholder meeting and alignment session.</div>
+        </div>
+      </div>
+      
+      <div class="prjtimeline-item future" style="--item-index: 9">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-future">Upcoming</div>
+          <div class="date">Aug.-Sept. 2025</div>
+          <div class="description">Intact configuration. Master data setup: vendors, customers and Chart of Accounts.</div>
+        </div>
+      </div>
+      
+      <div class="prjtimeline-item future" style="--item-index: 10">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-future">Upcoming</div>
+          <div class="date">Sep. 2025</div>
+          <div class="description">First "Workato" integration for AP, AR (finished goods) and inventory general ledger journal entries.</div>
+        </div>
+      </div>
+      
+      <div class="prjtimeline-item future" style="--item-index: 11">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-future">Upcoming</div>
+          <div class="date">Nov. 2025</div>
+          <div class="description">Finalize Inventory Management development and testing phase.</div>
+        </div>
+      </div>
+      
+      <div class="prjtimeline-item future" style="--item-index: 12">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-future">Upcoming</div>
+          <div class="date">Mar. 2026</div>
+          <div class="description">Finalize Order Entry development, enabling sales of hardgoods, services, and credit management.</div>
+        </div>
+      </div>
+      
+      <div class="prjtimeline-item future" style="--item-index: 13">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-future">Upcoming</div>
+          <div class="date">Jun. 2026</div>
+          <div class="description">Final release: Complete "Intact" integration and system consolidation.</div>
+        </div>
+      </div>
+      
+      <div class="prjtimeline-item future" style="--item-index: 14">
+        <div class="prjtimeline-content">
+          <div class="status-badge status-future">Upcoming</div>
+          <div class="date">Jul.-Aug. 2026</div>
+          <div class="description">Comprehensive testing phase and Macola system deactivation.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+</div>
+
+
+                </div>
+           
+
+
+       
+
+        
+    <!-- Q&A Summary Section -->
+    <div class="section">
+        <div class="section-header" onclick="toggleSection('qa-summary')">
+            <h2>Q&A Summary</h2>
+            <button class="toggle-btn" id="toggle-qa-summary">▼</button>
+        </div>
+        <div class="section-content collapsed" id="qa-summary">
+            <div class="qa-summary-section">
+                <div class="qa-summary-title">Meeting Questions & Notes Summary</div>
+                <div id="qaSummaryContent">
+                    <p style="text-align: center; color: #7f8c8d; font-style: italic;">Questions and notes will appear here as they are added during the meeting.</p>
+                </div>
+            </div>
         </div>
     </div>
+
+     </div>
+     </div>
+
+    </div>
+
+
+    <!-- Q&A Modal -->
+<div id="qaModal" class="qa-modal">
+    <div class="qa-modal-content">
+        <div class="qa-modal-header">
+            <h3 id="qaModalTitle">Q&A - Section</h3>
+            <button class="qa-close" onclick="closeQAModal()">&times;</button>
+        </div>
+        <div class="qa-chat-container" id="qaChatContainer">
+            <div class="qa-user-info">
+                <div class="qa-user-avatar" id="userAvatar">U</div>
+                <input type="text" id="userName" class="qa-user-input" placeholder="Your name" maxlength="20">
+                <span style="font-size: 12px; color: #7f8c8d;">Enter your name to participate</span>
+            </div>
+            <div id="qaMessages"></div>
+        </div>
+        <div class="qa-input-container">
+            <div class="qa-type-selector">
+                <button class="qa-type-btn active" data-type="note" onclick="selectMessageType('note')">Note</button>
+                <button class="qa-type-btn" data-type="question" onclick="selectMessageType('question')">Question</button>
+                <button class="qa-type-btn" data-type="answer" onclick="selectMessageType('answer')">Answer</button>
+            </div>
+            <div class="qa-input-row">
+                <input type="text" id="qaInput" class="qa-input" placeholder="Type your message..." maxlength="500">
+                <button id="qaSendBtn" class="qa-send-btn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
     
     <script>
+        //Diseño 
+         const modules = document.querySelectorAll('.wf-erp-module');
+
+        modules.forEach(module => {
+            module.addEventListener('click', () => {
+                const targetId = module.getAttribute('data-target');
+                const targetEl = document.getElementById(targetId);
+
+                // Ocultar todas las demás listas primero
+                document.querySelectorAll('.list-item').forEach(el => {
+                    if (el.id !== targetId) el.style.display = 'none';
+                });
+
+                // Mostrar u ocultar la lista clicada
+                if (targetEl.style.display === 'none' || targetEl.style.display === '') {
+                    targetEl.style.display = 'block';
+                } else {
+                    targetEl.style.display = 'none';
+                }
+            });
+        });
+
+
         // Toggle section functionality
         function toggleSection(sectionId) {
             const content = document.getElementById(sectionId);
@@ -1694,7 +3342,7 @@
                 toggle.classList.remove('rotated');
             } else {
                 content.classList.add('collapsed');
-                toggle.textContent = '▲';
+                toggle.textContent = '▼';
                 toggle.classList.add('rotated');
             }
         }
@@ -1912,6 +3560,781 @@
                 ]
             });
         });
+
+/* Questions and Answers System*/
+
+
+const encodedConfig = "eyJhcGlLZXkiOiJBSXphU3lCTDk2ZVdndVExV3RDR1M1VTJTTDRvU3hsblM1bHVjX2MiLCJhdXRoRG9tYWluIjoia2VuZGFsZmluYW5jaWFsc3lzdGVtcWEuZmlyZWJhc2VhcHAuY29tIiwicHJvamVjdElkIjoia2VuZGFsZmluYW5jaWFsc3lzdGVtcWEiLCJzdG9yYWdlQnVja2V0Ijoia2VuZGFsZmluYW5jaWFsc3lzdGVtcWEuZmlyZWJhc2VzdG9yYWdlLmFwcCIsIm1lc3NhZ2luZ1NlbmRlcklkIjoiMjE4MDgyMDE4NzUzIiwiYXBwSWQiOiIxOjIxODA4MjAxODc1Mzp3ZWI6ZWQ4YmYwYzNiOTkzOWU1OGFmNWI0MCIsIm1lYXN1cmVtZW50SWQiOiJHLVRDWVcwM0JLRFMifQ==";
+let firebaseConfig;
+try {
+    firebaseConfig = JSON.parse(atob(encodedConfig));
+} catch (error) {
+    console.error('Configuration error');
+    firebaseConfig = {}; // Fallback to empty config
+}
+
+let db;
+try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    console.log('Firebase initialized successfully');
+} catch (error) {
+    console.error('Firebase initialization error:', error);
+    db = null;
+}
+
+// Global variables
+let currentSection = '';
+let currentUser = '';
+let currentMessageType = 'note';
+let selectedQuestion = null;
+let unsubscribe = null;
+
+// Utility functions
+function isFirebaseAvailable() {
+    return db !== null && typeof db !== 'undefined';
+}
+
+function saveToLocalStorage(data) {
+    const messages = JSON.parse(localStorage.getItem('qa_messages') || '[]');
+    data.id = Date.now().toString();
+    data.timestamp = new Date();
+    messages.push(data);
+    localStorage.setItem('qa_messages', JSON.stringify(messages));
+    return data.id;
+}
+
+function loadFromLocalStorage(sectionId = null) {
+    const messages = JSON.parse(localStorage.getItem('qa_messages') || '[]');
+    if (sectionId) {
+        return messages.filter(msg => msg.section === sectionId);
+    }
+    return messages;
+}
+
+
+
+// Initialize user and event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    if (!localStorage.getItem('meetingUserId')) {
+        localStorage.setItem('meetingUserId', 'user_' + Math.random().toString(36).substr(2, 9));
+    }
+    
+    const savedName = localStorage.getItem('meetingUserName');
+    if (savedName) {
+        document.getElementById('userName').value = savedName;
+        currentUser = savedName;
+        updateUserAvatar();
+    }
+    
+    document.getElementById('userName').addEventListener('input', function(e) {
+        currentUser = e.target.value.trim();
+        localStorage.setItem('meetingUserName', currentUser);
+        updateUserAvatar();
+    });
+    
+    document.getElementById('qaInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+    
+    loadQASummary();
+    updateAllPendingCounts();
+    showConnectionStatus();
+});
+
+function updateUserAvatar() {
+    const avatar = document.getElementById('userAvatar');
+    avatar.textContent = currentUser ? currentUser.charAt(0).toUpperCase() : 'U';
+}
+
+function showConnectionStatus() {
+    const statusDiv = document.createElement('div');
+    statusDiv.style.cssText = `
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        padding: 8px 12px;
+        border-radius: 5px;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 1001;
+        ${isFirebaseAvailable() ? 
+            'background: #27ae60; color: white;' : 
+            'background: #f39c12; color: white;'
+        }
+    `;
+    statusDiv.textContent = isFirebaseAvailable() ? 
+        '🔗 Real-time sync active' : 
+        '💾 Local storage mode';
+    
+    document.body.appendChild(statusDiv);
+    setTimeout(() => statusDiv.remove(), 3000);
+}
+
+function openQAModal(event, sectionId) {
+    event.stopPropagation();
+    currentSection = sectionId;
+    selectedQuestion = null;
+    clearReplyMode();
+    
+    const modal = document.getElementById('qaModal');
+    const title = document.getElementById('qaModalTitle');
+    const sectionNames = {
+        'meeting-agenda': 'Meeting Agenda',
+        'historical-context': 'Historical Context',
+        'erp-integration': 'Current Architecture',
+        'final-release': 'Future Architecture',
+        'MeetingGoals': 'Meeting Goals',
+        'po-acceptance': 'PO Acceptance Process',
+        'inventory-management': 'Inventory Management',
+        'production-reporting': 'Production Reporting',
+        'order-entry': 'Order Entry & Invoicing',
+        'three-way-match': 'Three-Way Match Process',
+        'month-end-close': 'Month-End Close Process',
+        'Timeline': 'Project Timeline'
+    };
+    
+    title.textContent = `Q&A - ${sectionNames[sectionId] || sectionId}`;
+    modal.style.display = 'block';
+    loadMessages(sectionId);
+    setTimeout(() => document.getElementById('qaInput').focus(), 300);
+}
+
+function closeQAModal() {
+    document.getElementById('qaModal').style.display = 'none';
+    selectedQuestion = null;
+    clearReplyMode();
+    if (unsubscribe) {
+        unsubscribe();
+    }
+}
+
+function selectMessageType(type) {
+    currentMessageType = type;
+    document.querySelectorAll('.qa-type-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-type="${type}"]`).classList.add('active');
+    
+    const input = document.getElementById('qaInput');
+    const placeholders = {
+        'note': 'Type your note...',
+        'question': 'Ask your question...',
+        'answer': 'Provide your answer...'
+    };
+    input.placeholder = placeholders[type];
+    
+    if (type !== 'answer') {
+        clearReplyMode();
+    }
+}
+
+function selectQuestion(questionId, questionData) {
+    document.querySelectorAll('.qa-message.question').forEach(msg => msg.classList.remove('selected'));
+    
+    const questionElement = document.querySelector(`[data-message-id="${questionId}"]`);
+    if (questionElement) {
+        questionElement.classList.add('selected');
+        selectedQuestion = { id: questionId, data: questionData };
+        selectMessageType('answer');
+        showReplyMode(questionData);
+        document.getElementById('qaInput').focus();
+    }
+}
+
+function showReplyMode(questionData) {
+    const inputContainer = document.getElementById('qaInput').parentElement.parentElement;
+    inputContainer.classList.add('replying');
+    
+    const sendBtn = document.getElementById('qaSendBtn');
+    sendBtn.classList.add('reply-mode');
+    sendBtn.textContent = 'Reply';
+    
+    const existingIndicator = document.querySelector('.qa-replying-to');
+    if (existingIndicator) existingIndicator.remove();
+    
+    const replyIndicator = document.createElement('div');
+    replyIndicator.className = 'qa-replying-to';
+    replyIndicator.innerHTML = `
+        <div class="qa-replying-to-header">
+            <span class="qa-replying-to-label">Replying to ${questionData.user}'s question:</span>
+            <button class="qa-clear-reply" onclick="clearReplyMode()" title="Cancel reply">&times;</button>
+        </div>
+        <div class="qa-replying-to-content">${questionData.text}</div>
+    `;
+    
+    const inputRow = document.querySelector('.qa-input-row');
+    inputRow.parentNode.insertBefore(replyIndicator, inputRow);
+    document.getElementById('qaInput').placeholder = 'Type your answer...';
+}
+
+function clearReplyMode() {
+    selectedQuestion = null;
+    document.querySelectorAll('.qa-message.question').forEach(msg => msg.classList.remove('selected'));
+    
+    const inputContainer = document.getElementById('qaInput').parentElement.parentElement;
+    inputContainer.classList.remove('replying');
+    
+    const sendBtn = document.getElementById('qaSendBtn');
+    sendBtn.classList.remove('reply-mode');
+    sendBtn.textContent = 'Send';
+    
+    const replyIndicator = document.querySelector('.qa-replying-to');
+    if (replyIndicator) replyIndicator.remove();
+    
+    if (currentMessageType === 'answer') {
+        selectMessageType('note');
+    }
+}
+
+function sendMessage() {
+    const input = document.getElementById('qaInput');
+    const message = input.value.trim();
+    
+    if (!message || !currentUser) {
+        if (!currentUser) {
+            alert('Please enter your name first');
+            document.getElementById('userName').focus();
+        }
+        return;
+    }
+    
+    const messageData = {
+        text: message,
+        type: currentMessageType,
+        user: currentUser,
+        userId: localStorage.getItem('meetingUserId'),
+        section: currentSection,
+        status: currentMessageType === 'question' ? 'pending' : 'posted'
+    };
+    
+    if (selectedQuestion && currentMessageType === 'answer') {
+        messageData.replyTo = selectedQuestion.id;
+        messageData.isReply = true;
+    }
+    
+    if (isFirebaseAvailable()) {
+        messageData.timestamp = firebase.firestore.FieldValue.serverTimestamp();
+        
+        db.collection('meeting_qa').add(messageData)
+            .then((docRef) => {
+                input.value = '';
+                if (selectedQuestion && currentMessageType === 'answer') {
+                    db.collection('meeting_qa').doc(selectedQuestion.id).update({
+                        status: 'answered',
+                        answeredBy: currentUser,
+                        answeredAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    clearReplyMode();
+                }
+                updatePendingCount(currentSection);
+                loadQASummary();
+            })
+            .catch((error) => {
+                console.error('Error sending message:', error);
+                fallbackSendMessage(messageData);
+            });
+    } else {
+        fallbackSendMessage(messageData);
+    }
+}
+
+function fallbackSendMessage(messageData) {
+    const input = document.getElementById('qaInput');
+    const messageId = saveToLocalStorage(messageData);
+    
+    if (selectedQuestion && currentMessageType === 'answer') {
+        const messages = JSON.parse(localStorage.getItem('qa_messages') || '[]');
+        const questionIndex = messages.findIndex(msg => msg.id === selectedQuestion.id);
+        if (questionIndex !== -1) {
+            messages[questionIndex].status = 'answered';
+            messages[questionIndex].answeredBy = currentUser;
+            messages[questionIndex].answeredAt = new Date();
+            localStorage.setItem('qa_messages', JSON.stringify(messages));
+        }
+        clearReplyMode();
+    }
+    
+    input.value = '';
+    loadMessagesLocal(currentSection);
+    updatePendingCountLocal(currentSection);
+    loadQASummaryLocal();
+}
+
+function loadMessages(sectionId) {
+    if (unsubscribe) unsubscribe();
+    
+    const messagesContainer = document.getElementById('qaMessages');
+    messagesContainer.innerHTML = '<div style="text-align: center; color: #7f8c8d; padding: 20px;">Loading messages...</div>';
+    
+    if (isFirebaseAvailable()) {
+        unsubscribe = db.collection('meeting_qa')
+            .where('section', '==', sectionId)
+            .orderBy('timestamp', 'asc')
+            .onSnapshot((snapshot) => {
+                renderMessages(snapshot.docs.map(doc => ({...doc.data(), id: doc.id})));
+            }, (error) => {
+                console.error('Firebase error, falling back to localStorage:', error);
+                loadMessagesLocal(sectionId);
+            });
+    } else {
+        loadMessagesLocal(sectionId);
+    }
+}
+
+function loadMessagesLocal(sectionId) {
+    try {
+        const messages = loadFromLocalStorage(sectionId);
+        // Make sure localStorage messages have IDs
+        const messagesWithIds = messages.map(msg => {
+            if (!msg.id) {
+                msg.id = msg.timestamp ? msg.timestamp.toString() : Date.now().toString();
+            }
+            return msg;
+        });
+        renderMessages(messagesWithIds);
+    } catch (error) {
+        console.error('Error loading local messages:', error);
+        const messagesContainer = document.getElementById('qaMessages');
+        if (messagesContainer) {
+            messagesContainer.innerHTML = '<div style="text-align: center; color: #e74c3c; padding: 20px;">Error loading messages</div>';
+        }
+    }
+}
+
+function renderMessages(messages) {
+    const messagesContainer = document.getElementById('qaMessages');
+    messagesContainer.innerHTML = '';
+    
+    const mainMessages = [];
+    const replies = {};
+    
+    messages.forEach((data) => {
+        if (data.isReply && data.replyTo) {
+            if (!replies[data.replyTo]) replies[data.replyTo] = [];
+            replies[data.replyTo].push(data);
+        } else {
+            mainMessages.push(data);
+        }
+    });
+    
+    mainMessages.forEach((data) => {
+        const messageDiv = createMessageElement(data);
+        messagesContainer.appendChild(messageDiv);
+        
+        if (replies[data.id]) {
+            const threadDiv = document.createElement('div');
+            threadDiv.className = 'qa-thread';
+            
+            const threadIndicator = document.createElement('div');
+            threadIndicator.className = 'qa-thread-indicator';
+            threadIndicator.textContent = `${replies[data.id].length} ${replies[data.id].length === 1 ? 'reply' : 'replies'}`;
+            threadDiv.appendChild(threadIndicator);
+            
+            replies[data.id].forEach(reply => {
+                const replyDiv = createMessageElement(reply, true);
+                threadDiv.appendChild(replyDiv);
+            });
+            
+            messagesContainer.appendChild(threadDiv);
+        }
+    });
+    
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Enhanced function to create message elements with better color coding
+function createMessageElement(data, isReply = false) {
+    const messageDiv = document.createElement('div');
+    const currentUserId = localStorage.getItem('meetingUserId');
+    const isCurrentUser = data.userId === currentUserId;
+    
+    // Build class list with proper color coding
+    let classList = `qa-message ${isCurrentUser ? 'user' : 'other'} ${data.type}`;
+    
+    if (data.type === 'question' && data.status === 'answered') {
+        classList += ' answered';
+    }
+    
+    messageDiv.className = classList;
+    messageDiv.setAttribute('data-message-id', data.id);
+    
+    // Add click handler for unanswered questions
+    if (data.type === 'question' && !isReply && data.status === 'pending') {
+        messageDiv.addEventListener('click', () => selectQuestion(data.id, data));
+        messageDiv.style.cursor = 'pointer';
+        messageDiv.title = 'Click to reply to this question';
+    }
+    
+    const timestamp = data.timestamp ? 
+        (data.timestamp.toDate ? new Date(data.timestamp.toDate()).toLocaleTimeString() : new Date(data.timestamp).toLocaleTimeString()) : 
+        'Sending...';
+    
+    // Create type badge with appropriate styling
+    const typeBadge = `<span class="qa-message-type">${isReply ? 'reply' : data.type}</span>`;
+    
+    messageDiv.innerHTML = `
+        <div class="qa-message-header">
+            <span class="qa-message-user">${data.user}</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                ${typeBadge}
+                <span class="qa-message-time">${timestamp}</span>
+            </div>
+        </div>
+        <div class="qa-message-content">${data.text}</div>
+    `;
+    
+    return messageDiv;
+}
+
+
+// Enhanced function to force update all pending counts
+function forceUpdateAllPendingCounts() {
+    try {
+        const sections = [
+            'meeting-agenda', 'historical-context', 'erp-integration', 
+            'final-release', 'MeetingGoals', 'po-acceptance', 
+            'inventory-management', 'production-reporting', 'order-entry', 
+            'three-way-match', 'month-end-close', 'Timeline'
+        ];
+        
+        sections.forEach(sectionId => {
+            try {
+                if (isFirebaseAvailable()) {
+                    updatePendingCount(sectionId);
+                } else {
+                    updatePendingCountLocal(sectionId);
+                }
+            } catch (error) {
+                console.error(`Error updating count for section ${sectionId}:`, error);
+            }
+        });
+    } catch (error) {
+        console.error('Error in forceUpdateAllPendingCounts:', error);
+    }
+}
+
+
+function updatePendingCount(sectionId) {
+    if (isFirebaseAvailable()) {
+        db.collection('meeting_qa')
+            .where('section', '==', sectionId)
+            .where('type', '==', 'question')
+            .where('status', '==', 'pending')
+            .get()
+            .then((querySnapshot) => {
+                updateIconBadge(sectionId, querySnapshot.size);
+            })
+            .catch(() => {
+                updatePendingCountLocal(sectionId);
+            });
+    } else {
+        updatePendingCountLocal(sectionId);
+    }
+}
+
+// Enhanced local storage update function
+function updatePendingCountLocal(sectionId) {
+    const messages = loadFromLocalStorage(sectionId);
+    const count = messages.filter(msg => 
+        msg.type === 'question' && 
+        msg.status === 'pending' && 
+        !msg.isReply
+    ).length;
+    
+    console.log(`Section ${sectionId}: ${count} pending questions`); // Debug log
+    updateIconBadge(sectionId, count);
+}
+
+// Improved function to update icon badges
+function updateIconBadge(sectionId, count) {
+    const icon = document.querySelector(`[data-section="${sectionId}"]`);
+    if (icon) {
+        // Remove existing classes and attributes
+        icon.classList.remove('has-pending');
+        icon.removeAttribute('data-count');
+        
+        if (count > 0) {
+            // Add the pending class and count
+            icon.classList.add('has-pending');
+            icon.setAttribute('data-count', count > 99 ? '99+' : count.toString());
+            
+            // Add a subtle animation to draw attention
+            icon.style.animation = 'none';
+            setTimeout(() => {
+                icon.style.animation = 'iconPulse 2s infinite';
+            }, 100);
+        } else {
+            // Remove animation when no pending questions
+            icon.style.animation = 'none';
+        }
+    }
+}
+
+function updateAllPendingCounts() {
+    const sections = ['meeting-agenda', 'historical-context', 'erp-integration', 'final-release', 'MeetingGoals', 'po-acceptance', 'inventory-management', 'production-reporting', 'order-entry', 'three-way-match', 'month-end-close', 'Timeline'];
+    sections.forEach(sectionId => updatePendingCount(sectionId));
+}
+
+function loadQASummary() {
+    if (isFirebaseAvailable()) {
+        db.collection('meeting_qa')
+            .orderBy('timestamp', 'asc')
+            .get()
+            .then((querySnapshot) => {
+                const messages = querySnapshot.docs.map(doc => ({
+                    ...doc.data(),
+                    id: doc.id  // This is the missing piece!
+                }));
+                renderQASummary(messages);
+            })
+            .catch((error) => {
+                console.error('Error loading Q&A summary:', error);
+                loadQASummaryLocal();
+            });
+    } else {
+        loadQASummaryLocal();
+    }
+}
+
+function loadQASummaryLocal() {
+    const allMessages = loadFromLocalStorage();
+    // Make sure localStorage messages have IDs
+    const messagesWithIds = allMessages.map(msg => {
+        if (!msg.id) {
+            msg.id = msg.timestamp ? msg.timestamp.toString() : Date.now().toString();
+        }
+        return msg;
+    });
+    renderQASummary(messagesWithIds);
+}
+
+
+
+function debugQAData(allMessages) {
+    console.log('=== DEBUG QA DATA ===');
+    console.log('All messages:', allMessages);
+    
+    const questions = allMessages.filter(msg => msg.type === 'question' && !msg.isReply);
+    const answers = allMessages.filter(msg => msg.isReply && msg.replyTo);
+    
+    console.log('Questions found:', questions.length);
+    console.log('Answers found:', answers.length);
+    
+    questions.forEach(q => {
+        console.log(`Question ID: ${q.id}, Text: "${q.text}"`);
+        const relatedAnswers = answers.filter(a => a.replyTo === q.id);
+        console.log(`  -> Related answers: ${relatedAnswers.length}`);
+        relatedAnswers.forEach(a => {
+            console.log(`     Answer: "${a.text}" by ${a.user}`);
+        });
+    });
+}
+
+
+
+function renderQASummary(allMessages) {
+    const summaryContainer = document.getElementById('qaSummaryContent');
+    
+    if (allMessages.length === 0) {
+        summaryContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No questions or notes yet.</p>';
+        return;
+    }
+    
+    // Debug the data
+    debugQAData(allMessages);
+    
+    const sections = {};
+    const replies = {};
+    
+    // Organize messages by section and create replies lookup
+    allMessages.forEach((data) => {
+        if (!sections[data.section]) sections[data.section] = [];
+        sections[data.section].push(data);
+        
+        if (data.isReply && data.replyTo) {
+            if (!replies[data.replyTo]) replies[data.replyTo] = [];
+            replies[data.replyTo].push(data);
+        }
+    });
+    
+    console.log('Replies object:', replies);
+    
+    let html = '';
+    const sectionNames = {
+        'meeting-agenda': 'Meeting Agenda',
+        'historical-context': 'Historical Context',
+        'erp-integration': 'Current Architecture',
+        'final-release': 'Future Architecture',
+        'MeetingGoals': 'Meeting Goals',
+        'po-acceptance': 'PO Acceptance Process',
+        'inventory-management': 'Inventory Management',
+        'production-reporting': 'Production Reporting',
+        'order-entry': 'Order Entry & Invoicing',
+        'three-way-match': 'Three-Way Match Process',
+        'month-end-close': 'Month-End Close Process',
+        'Timeline': 'Project Timeline'
+    };
+    
+    // Questions and Answers Section
+    let hasQuestions = false;
+    Object.keys(sections).forEach(sectionId => {
+        const sectionData = sections[sectionId];
+        const questions = sectionData.filter(item => item.type === 'question' && !item.isReply);
+        
+        if (questions.length > 0) {
+            if (!hasQuestions) {
+                html += '<h3 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px;">❓ Questions & Answers</h3>';
+                hasQuestions = true;
+            }
+            
+            const pendingCount = questions.filter(q => q.status === 'pending').length;
+            const answeredCount = questions.filter(q => q.status === 'answered').length;
+            
+            html += `
+                <div class="qa-section-group">
+                    <h4>📋 ${sectionNames[sectionId] || sectionId} 
+                        <span style="font-size: 12px; color: #7f8c8d;">
+                            (${answeredCount} answered, ${pendingCount} pending)
+                        </span>
+                    </h4>
+            `;
+            
+            questions.forEach((question, index) => {
+                const timestamp = question.timestamp ? 
+                    (question.timestamp.toDate ? new Date(question.timestamp.toDate()).toLocaleString() : new Date(question.timestamp).toLocaleString()) : 
+                    'Unknown time';
+                
+                const questionId = `question-${sectionId}-${index}`;
+                
+                // Use the Firebase document ID to check for replies
+                const questionFirebaseId = question.id;
+                const hasAnswers = replies[questionFirebaseId] && replies[questionFirebaseId].length > 0;
+                
+                console.log(`Question "${question.text}" - Firebase ID: ${questionFirebaseId}, Has answers: ${hasAnswers}`);
+                
+                html += `
+                    <div class="qa-question-item ${question.status === 'answered' ? 'answered' : ''}" style="cursor: ${hasAnswers ? 'pointer' : 'default'};" ${hasAnswers ? `onclick="toggleAnswer('${questionId}')"` : ''}>
+                        <div class="qa-question-header">
+                            <span class="qa-question-user">👤 ${question.user}</span>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <span class="qa-question-status ${question.status}">${question.status}</span>
+                                <span class="qa-question-time">${timestamp}</span>
+                                ${hasAnswers ? '<span style="font-size: 12px; color: #3498db;">▼ Click to view answers</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="qa-question-text"><strong>Q:</strong> ${question.text}</div>
+                `;
+                
+                // Add collapsible answers if they exist
+                if (hasAnswers) {
+                    html += `<div id="${questionId}" class="qa-answers-container" style="display: none; margin-top: 10px; margin-left: 15px; border-left: 3px solid #27ae60; padding-left: 10px; background: #f8f9fa; border-radius: 5px; padding: 10px;">`;
+                    
+                    replies[questionFirebaseId].forEach(answer => {
+                        const answerTime = answer.timestamp ? 
+                            (answer.timestamp.toDate ? new Date(answer.timestamp.toDate()).toLocaleString() : new Date(answer.timestamp).toLocaleString()) : 
+                            'Unknown time';
+                        html += `
+                            <div style="margin-bottom: 8px; padding: 8px; background: white; border-radius: 4px; border-left: 3px solid #27ae60;">
+                                <div style="font-size: 11px; color: #27ae60; margin-bottom: 3px; font-weight: bold;">
+                                    ✓ ${answer.user} - ${answerTime}
+                                </div>
+                                <div style="font-size: 13px; color: #2c3e50;">${answer.text}</div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+            });
+            
+            html += '</div>';
+        }
+    });
+    
+    // Notes Section
+    let hasNotes = false;
+    Object.keys(sections).forEach(sectionId => {
+        const sectionData = sections[sectionId];
+        const notes = sectionData.filter(item => item.type === 'note' && !item.isReply);
+        
+        if (notes.length > 0) {
+            if (!hasNotes) {
+                html += '<h3 style="color: #2c3e50; border-bottom: 2px solid #2196f3; padding-bottom: 10px; margin: 30px 0 20px 0;">📝 Notes</h3>';
+                hasNotes = true;
+            }
+            
+            html += `
+                <div class="qa-section-group">
+                    <h4>📋 ${sectionNames[sectionId] || sectionId} 
+                        <span style="font-size: 12px; color: #7f8c8d;">
+                            (${notes.length} notes)
+                        </span>
+                    </h4>
+            `;
+            
+            notes.forEach(note => {
+                const timestamp = note.timestamp ? 
+                    (note.timestamp.toDate ? new Date(note.timestamp.toDate()).toLocaleString() : new Date(note.timestamp).toLocaleString()) : 
+                    'Unknown time';
+                
+                html += `
+                    <div class="qa-question-item" style="background: linear-gradient(135deg, #e3f2fd, #f8f9fa); border-left-color: #2196f3;">
+                        <div class="qa-question-header">
+                            <span class="qa-question-user">👤 ${note.user}</span>
+                            <span class="qa-question-time">${timestamp}</span>
+                        </div>
+                        <div class="qa-question-text">${note.text}</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+        }
+    });
+    
+    summaryContainer.innerHTML = html || '<p style="text-align: center; color: #7f8c8d; font-style: italic;">No questions or notes have been added yet.</p>';
+}
+
+// Function to toggle answer visibility
+function toggleAnswer(questionId) {
+    const answerContainer = document.getElementById(questionId);
+    const questionItem = answerContainer.parentElement;
+    const indicator = questionItem.querySelector('.qa-question-header span:last-child');
+    
+    if (answerContainer.style.display === 'none') {
+        answerContainer.style.display = 'block';
+        indicator.innerHTML = '▲ Click to hide answers';
+        indicator.style.color = '#27ae60';
+    } else {
+        answerContainer.style.display = 'none';
+        indicator.innerHTML = '▼ Click to view answers';
+        indicator.style.color = '#3498db';
+    }
+}
+
+
+
+// Setup periodic updates with error handling
+setInterval(() => {
+    try {
+        forceUpdateAllPendingCounts();
+    } catch (error) {
+        console.error('Error in periodic update:', error);
+    }
+}, 20000); // Update every 20 seconds
+
+window.onclick = function(event) {
+    const modal = document.getElementById('qaModal');
+    if (event.target === modal) {
+        closeQAModal();
+    }
+}
+
+
+
+
     </script>
 </body>
 </html>
