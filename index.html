@@ -2681,7 +2681,7 @@
                 </div>
                 <div class="section-content collapsed" id="team">
                     <div class="erp-integration-container">               
-                        <img src="img/team.jpg" alt="">
+                        <img src="img/team.jpg" alt="" style="width: 600px;">
                     </div>
 
                 </div>
@@ -3950,7 +3950,9 @@ function openQAModal(event, sectionId) {
         'month-end-close': 'Month-End Close Process',
         'Timeline': 'Project Timeline',
         'Intacct' :'Intacct',
-        'Agreements' : 'Agreements'
+        'Agreements' : 'Agreements',
+        'Screenshots' : 'Screenshots',
+        'Team' : 'Team'
     };
     
     title.textContent = `Q&A - ${sectionNames[sectionId] || sectionId}`;
@@ -4252,7 +4254,7 @@ function forceUpdateAllPendingCounts() {
             'meeting-agenda', 'historical-context', 'erp-integration', 
             'final-release', 'MeetingGoals', 'po-acceptance', 
             'inventory-management', 'production-reporting', 'order-entry', 
-            'three-way-match', 'month-end-close', 'Timeline','Intacct','Agreements'
+            'three-way-match', 'month-end-close', 'Timeline','Intacct','Agreements','Screenshots','Team' 
         ];
         
         sections.forEach(sectionId => {
@@ -4329,7 +4331,7 @@ function updateIconBadge(sectionId, count) {
 }
 
 function updateAllPendingCounts() {
-    const sections = ['meeting-agenda', 'historical-context', 'erp-integration', 'final-release', 'MeetingGoals', 'po-acceptance', 'inventory-management', 'production-reporting', 'order-entry', 'three-way-match', 'month-end-close', 'Timeline','Intacct','Agreements'];
+    const sections = ['meeting-agenda', 'historical-context', 'erp-integration', 'final-release', 'MeetingGoals', 'po-acceptance', 'inventory-management', 'production-reporting', 'order-entry', 'three-way-match', 'month-end-close', 'Timeline','Intacct','Agreements','Screenshots','Team'];
     sections.forEach(sectionId => updatePendingCount(sectionId));
 }
 
@@ -4432,7 +4434,9 @@ function renderQASummary(allMessages) {
         'month-end-close': 'Month-End Close Process',
         'Timeline': 'Project Timeline',
         'Intacct' : 'Intacct',
-        'Agreements':'Agreements'
+        'Agreements':'Agreements',
+        'Screenshots':'Screenshots',
+        'Team':'Team'
     };
     
     // Questions and Answers Section
