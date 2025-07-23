@@ -14,6 +14,140 @@
 
 
     <style>
+/*Screenshot Carrusel */
+
+.carousel-container {
+    max-width: 100%;
+    margin: 0 auto;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.carousel-content {
+    flex: 1;
+    text-align: center;
+}
+
+.image-container {
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#carousel-image {
+    max-width: 100%;
+    max-height: 500px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.loading-message, .no-images-message {
+    color: #666;
+    font-style: italic;
+    padding: 40px;
+}
+
+.carousel-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.carousel-btn:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+}
+
+.carousel-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.image-name {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.image-counter {
+    color: #666;
+    font-size: 14px;
+}
+
+.thumbnail-strip {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px 0;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.thumbnail {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    opacity: 0.7;
+}
+
+.thumbnail:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.thumbnail.active {
+    border-color: #007bff;
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+    .carousel-wrapper {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .carousel-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .thumbnail-strip {
+        justify-content: flex-start;
+    }
+}
+
+
 /* Q&A Modal Styles */
 .qa-modal {
     display: none;
@@ -3313,6 +3447,36 @@
             </div>
 
 
+       
+
+
+<!-- Screenshots -->
+<div class="section">
+    <div class="section-header" onclick="toggleSection('Screenshots')">
+        <h2>Screenshots</h2>
+        <div class="qa-icon" onclick="openQAModal(event, 'Screenshots')" data-section="Screenshots">💬</div>
+        <button class="toggle-btn" id="toggle-Screenshots">▼</button>
+    </div>
+    <div class="section-content collapsed" id="Screenshots">
+        <div class="carousel-container">
+            <div class="carousel-wrapper">
+                <button class="carousel-btn prev-btn" onclick="previousImage()">&lt;</button>
+                <div class="carousel-content">
+                    <div class="image-container">
+                        <img id="carousel-image" src="" alt="Screenshot" style="display: none;">
+                        <div class="loading-message">Loading screenshots...</div>
+                        <div class="no-images-message" style="display: none;">No screenshots found in the screens folder</div>
+                    </div>
+                    <div class="image-name" id="image-name"></div>
+                    <div class="image-counter" id="image-counter"></div>
+                </div>
+                <button class="carousel-btn next-btn" onclick="nextImage()">&gt;</button>
+            </div>
+            <div class="thumbnail-strip" id="thumbnail-strip"></div>
+        </div>
+    </div>
+</div>     
+
 
 
 
@@ -4415,6 +4579,193 @@ window.onclick = function(event) {
 document.getElementById('qaInput').addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+});
+
+
+//Section for carrousel 
+
+let currentImageIndex = 0;
+let imageList = [];
+
+
+const imageFilenames = [
+    'AP_Landed_Cost_Post_To_AP.png',
+    'AP_Post_AP_Bills.png',
+    'AP_Vendor_Master_Set-up.png',
+    'AR_Configuration.png',
+    'AR_Customer_Configuration.png',
+    'GL_Distribution_File.png',
+    'GL_Month_End_Process.png',
+    'IM_Costing_Group_HardGoods.png',
+    'IM_Costing_Group_Products.png',
+    'IM_Costing_GroupBulk.png',
+    'IM_Inventory_Adjustments.png',
+    'IM_Inventory_Transactions_Report.png',
+    'IM_Inventory_Valuation.png',
+    'IM_Material_Cost_Type.png',
+    'IM_Product_Category.png',
+    'PO_Acceptance_Costing_System.png',
+    'PO_Landed_Cost_Codes.png',
+    'PO_Landed_Cost_Purchase_Order.png',
+    'PO_Landed_Cost_Report.png',
+    'PO_Landed_Cost_Rules.png',
+    'POP_Dissassembly.png',
+    'POP_Reporting.png'
+];
+
+// Function to load images from the screens folder
+async function loadImages() {
+    const loadingMessage = document.querySelector('.loading-message');
+    const noImagesMessage = document.querySelector('.no-images-message');
+    const carouselImage = document.getElementById('carousel-image');
+    
+    try {
+        const foundImages = [];
+        
+        // Check each specified filename
+        for (const filename of imageFilenames) {
+            try {
+                const response = await fetch(`screens/${filename}`);
+                if (response.ok) {
+                    foundImages.push(filename);
+                } else {
+                    console.log(`Image not found: ${filename}`);
+                }
+            } catch (error) {
+                console.log(`Error loading image: ${filename}`, error);
+            }
+        }
+        
+        imageList = foundImages;
+        
+        if (imageList.length > 0) {
+            loadingMessage.style.display = 'none';
+            currentImageIndex = 0;
+            displayCurrentImage();
+            createThumbnails();
+            updateNavigationButtons();
+        } else {
+            loadingMessage.style.display = 'none';
+            noImagesMessage.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error loading images:', error);
+        loadingMessage.style.display = 'none';
+        noImagesMessage.style.display = 'block';
+    }
+}
+
+// Function to display the current image
+function displayCurrentImage() {
+    if (imageList.length === 0) return;
+    
+    const carouselImage = document.getElementById('carousel-image');
+    const imageName = document.getElementById('image-name');
+    const imageCounter = document.getElementById('image-counter');
+    
+    const currentImage = imageList[currentImageIndex];
+    carouselImage.src = `screens/${currentImage}`;
+    carouselImage.style.display = 'block';
+    
+    // Display filename without extension for cleaner look
+    const nameWithoutExtension = currentImage.replace(/\.[^/.]+$/, "");
+    imageName.textContent = nameWithoutExtension;
+    imageCounter.textContent = `${currentImageIndex + 1} of ${imageList.length}`;
+    
+    updateThumbnailSelection();
+}
+
+// Function to create thumbnail strip
+function createThumbnails() {
+    const thumbnailStrip = document.getElementById('thumbnail-strip');
+    thumbnailStrip.innerHTML = '';
+    
+    imageList.forEach((image, index) => {
+        const thumbnail = document.createElement('img');
+        thumbnail.src = `screens/${image}`;
+        thumbnail.className = 'thumbnail';
+        thumbnail.alt = image;
+        thumbnail.onclick = () => goToImage(index);
+        thumbnailStrip.appendChild(thumbnail);
+    });
+}
+
+// Function to update thumbnail selection
+function updateThumbnailSelection() {
+    const thumbnails = document.querySelectorAll('.thumbnail');
+    thumbnails.forEach((thumb, index) => {
+        thumb.classList.toggle('active', index === currentImageIndex);
+    });
+}
+
+// Function to go to specific image
+function goToImage(index) {
+    if (index >= 0 && index < imageList.length) {
+        currentImageIndex = index;
+        displayCurrentImage();
+        updateNavigationButtons();
+    }
+}
+
+// Function to go to next image
+function nextImage() {
+    if (currentImageIndex < imageList.length - 1) {
+        currentImageIndex++;
+        displayCurrentImage();
+        updateNavigationButtons();
+    }
+}
+
+// Function to go to previous image
+function previousImage() {
+    if (currentImageIndex > 0) {
+        currentImageIndex--;
+        displayCurrentImage();
+        updateNavigationButtons();
+    }
+}
+
+// Function to update navigation button states
+function updateNavigationButtons() {
+    const prevBtn = document.querySelector('.prev-btn');
+    const nextBtn = document.querySelector('.next-btn');
+    
+    prevBtn.disabled = currentImageIndex === 0;
+    nextBtn.disabled = currentImageIndex === imageList.length - 1;
+}
+
+// Load images when the page loads
+document.addEventListener('DOMContentLoaded', loadImages);
+
+// Also load images when the section is expanded
+function checkAndLoadImages() {
+    const section = document.getElementById('Screenshots');
+    if (section && !section.classList.contains('collapsed') && imageList.length === 0) {
+        loadImages();
+    }
+}
+
+// Override or add to existing toggleSection function
+const originalToggleSection = window.toggleSection;
+window.toggleSection = function(sectionName) {
+    if (originalToggleSection) {
+        originalToggleSection(sectionName);
+    }
+    if (sectionName === 'Screenshots') {
+        setTimeout(checkAndLoadImages, 100);
+    }
+};
+
+// Keyboard navigation
+document.addEventListener('keydown', function(event) {
+    const section = document.getElementById('Screenshots');
+    if (section && !section.classList.contains('collapsed')) {
+        if (event.key === 'ArrowLeft') {
+            previousImage();
+        } else if (event.key === 'ArrowRight') {
+            nextImage();
+        }
+    }
 });
 
 
