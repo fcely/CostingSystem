@@ -6,6 +6,43 @@
     <title>WF-INTACCT</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <style>
+         /*Diseño*/
+
+        .list-item {
+            position: absolute;
+            right: 250px;
+            display: none; /* Oculto por defecto */
+            background: linear-gradient(135deg, #f9f871 0%, #e6d435 100%);
+            border: 2px solid #d4b429;
+            padding: 10px;
+            border-radius: 16px;
+            width: 360px;
+        }
+        .list-item ul{
+            margin: 0px;
+        }
+        .list-item h4{
+            margin: 8px 0px;
+        }
+        .brand-img{
+            right: 110px;
+            position: absolute;
+            top: 70px;
+        }
+        .brand-img img{
+            margin-right: 10px;
+        }
+
+        .erp-module {
+            cursor: pointer;
+            padding: 10px;
+            margin: 5px;
+            background: #cce;
+            display: inline-block;
+        }
+
+        /*Diseño*/
+
         
          .erp-integration-container {
             position: relative;
@@ -971,6 +1008,242 @@
                 </div>
             </div>
 
+              <!-- Context -->
+
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('Context')">
+                    <h2>Context</h2>
+                    <button class="toggle-btn" id="toggle-Context">â–¼</button>
+                </div>
+                <div class="section-content" id="Context">
+                    <div class="erp-integration-container" style="height: 800px;">
+                        <img src="img/Contexto.png" alt="">
+                    </div>
+                </div>
+            </div>
+            
+
+               <!-- Project Timeline Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('Timeline')">
+                    <h2>Project TimeLine</h2>
+                    <button class="toggle-btn" id="toggle-Timeline">â–¼</button>
+                </div>
+                <div class="section-content" id="Timeline">
+                    <div class="erp-integration-container" style="height: 1250px;">
+                        <img src="img/Timeline.png" alt="">
+                    </div>
+                </div>
+            </div>
+
+             <!-- ERP Integration Chart Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('erp-integration')">
+                    <h2>Web Flowers & Intacct ERP Integration</h2>
+                    <button class="toggle-btn" id="toggle-erp-integration">â–¼</button>
+                </div>
+                <div class="section-content" id="erp-integration">
+                    <div class="erp-integration-container">
+                        <div class="diagram-title">Initial status</div>
+                        <p style="text-align: center; margin: 0px; ">It does not allow the unification of accounting in Intacct for the companies in the United States.</p>
+                        <img src="img/img wf intacct.png" alt="">
+                    </div>
+                    
+                    <div class="erp-integration-container">
+                        <div class="diagram-title">Final release</div>
+                        <!--Diseño -->
+                            <div class="cont-graphics" style="position: relative; margin-top: 80px;">
+                            <!-- Web Flowers Modules -->
+                            <div class="erp-module wf-erp-module erp-oe" data-target="list-oe">OE</div>
+                            <div class="erp-module wf-erp-module erp-bom" data-target="list-bom">BOM</div>
+                            <div class="erp-module wf-erp-module erp-pop" data-target="list-pop">POP</div>
+                            <div class="erp-module wf-erp-module erp-im" data-target="list-im">IM</div>
+                            <div class="erp-module wf-erp-module erp-po-lc" data-target="list-polc">PO+LC</div>
+
+                            <!-- Intacct Modules (no funcionalidad aplicada aún) -->
+                            <div class="erp-module intacct-erp-module erp-gl central-erp-hub">GL</div>
+                            <div class="erp-module intacct-erp-module erp-cm">CM</div>
+                            <div class="erp-module intacct-erp-module erp-ad">AD</div>
+                            <div class="erp-module intacct-erp-module erp-ar">AR</div>
+                            <div class="erp-module intacct-erp-module erp-ap">AP</div>
+                            <div class="erp-module intacct-erp-module erp-pr">PR</div>
+                            <div class="erp-module intacct-erp-module erp-bb">BB</div>
+                        </div>
+
+                        <!-- Listas asociadas a cada módulo -->
+                        <div class="list-item" id="list-oe" style="top: 190px;right: 190px;">OE
+                            <h4>Accounting</h4>
+                            <ul>
+                                <li>invoicing</li>
+                            </ul>
+                            <h4>Customer</h4>
+                            <ul>
+                                <li>Customer group + other specification</li>
+                            </ul>
+                            <h4>Inventory</h4>
+                            <ul>
+                                <li>Distribution File (AR)</li>
+                            </ul>
+                        </div>
+                        <div class="list-item" id="list-bom" style="top: 190px;right: 190px;">BOM
+                            <h4>Inventory</h4>
+                            <ul>
+                                <li>Costing group (bulk, products, hardgoods)</li>
+                                <li>Audit</li>
+                                <li>Material cost type</li>
+                                <li>Product Category</li>
+                            </ul>
+                            <h4>Reports</h4>
+                            <ul>
+                                <li>Costing group summary</li>
+                            </ul>
+                        </div>
+                        <div class="list-item" id="list-pop" style="top: 190px;right: 190px;">POP
+                            <h4>Inventory</h4>
+                            <ul>
+                                <li>Production reporting</li>
+                                <li>Products disassembly</li>
+                            </ul>
+                        </div>
+                        <div class="list-item" id="list-im" style="top: 190px;right: 190px;">IM
+                            <h4>Inventory</h4>
+                            <ul>
+                                <li>Adjustments</li>
+                                <li>Report</li>
+                                <li>Distribution file (IM)</li>
+                                <li>Log</li>
+                            </ul>
+                        </div>
+                        <div class="list-item" id="list-polc" style="top: 190px;right: 190px;">PO+LC
+                            <h4>Procurement</h4>
+                            <ul>
+                                <li>Costing system Acceptance</li>
+                                <li>Post to AP</li>
+                                <li>Landed cost codes</li>
+                                <li>Landed cost rules</li>
+                                <li>New PO (bulk, product, hardgoods)</li>
+                            </ul>
+                            <h4>Reports</h4>
+                            <ul>
+                                <li>Landed cost Reports</li>
+                            </ul>
+                            <h4>Inventory</h4>
+                            <ul>
+                                <li>Distribution file</li>
+                            </ul>
+                        </div>
+
+                        <!-- System Modules -->
+                        <div class="system-modules" style="position: relative;">
+                            <div class="erp-module system-erp-module erp-master-tables">
+                                <div style="font-size: 11px; margin-bottom: 3px;">Master Tables</div>
+                                <div style="font-size: 8px; opacity: 0.9;">Vendors, Customers, Chart of Accounts</div>
+                            </div>
+                            
+                            <div class="erp-module system-erp-module erp-budget-system">
+                                <div style="font-size: 11px; margin-bottom: 3px;">Budget System</div>
+                                <div style="font-size: 8px; opacity: 0.9;">Planning & Forecasting</div>
+                            </div>
+                            
+                            <div class="erp-module system-erp-module erp-vu-warehouse">
+                                <div style="margin-bottom: 4px;">VU - Business Intelligence Data Warehouse</div>
+                                <div style="font-size: 11px; opacity: 0.9;">Dashboards â€¢ Reports â€¢ Analytics â€¢ Data Integration</div>
+                            </div>
+                        </div>  
+                        
+                        <!-- Connection Lines -->
+                        <div class="erp-connection-line erp-data-flow" style="top: 280px; left: 250px; width: 75px;"></div>
+                        <div class="erp-arrow erp-arrow-red" style="top: 180px; left: 428px;"></div>
+                        
+                        <!-- Integration Flows -->
+                        <div class="erp-connection-line erp-data-flow" style="top: 205px; left: 250px; width: 35px;"></div>
+                        <div class="erp-arrow erp-arrow-red" style="top: 115px; left: 275px;"></div>
+                        
+                        <div class="erp-connection-line erp-data-flow" style="top: 355px; left: 250px; width: 35px;"></div>
+                        <div class="erp-arrow erp-arrow-red" style="top: 226px; left: 300px;"></div>
+                        
+                        <div class="erp-legend">
+                            <h4>Legend</h4>
+                            <div class="erp-legend-item">
+                                <div class="erp-legend-color" style="background: linear-gradient(135deg, #f9f871 0%, #e6d435 100%); border-color: #d4b429;"></div>
+                                Web Flowers
+                            </div>
+                            <div class="erp-legend-item">
+                                <div class="erp-legend-color" style="background: linear-gradient(135deg, #b3d9ff 0%, #7fc4ff 100%); border-color: #5ba3d0;"></div>
+                                Intacct
+                            </div>
+                            <div class="erp-legend-item">
+                                <div class="erp-legend-line" style="background: #e74c3c; height: 4px;"></div>
+                                Data Integration
+                            </div>
+                        </div>
+                        <div class="brand-img">
+                            <img src="./img/image 14.png" alt="">
+                            <img src="img/image 15.png" alt="">
+                            <img src="img/wf.png" alt="">
+                             <img src="img/image 19.png" alt="">
+                        </div>
+                    </div>                    
+                    <div class="erp-reports-section">
+                        <div class="erp-reports-title">Financial Reports & Analytics</div>
+                        <div class="erp-reports-grid">
+                            <div class="erp-report-category">
+                                <h4>Core Financial Reports</h4>
+                                <ul>
+                                    <li>P&L Statement</li>
+                                    <li>Balance Sheet</li>
+                                    <li>Cash Flow Statement</li>
+                                    <li>Trial Balance</li>
+                                    <li>General Ledger Detail</li>
+                                    <li>Budget vs Actual</li>
+                                    <li>Variance Analysis</li>
+                                    <li>Financial Ratios</li>
+                                    <li>Aged A/R & A/P</li>
+                                    <li>Bank Reconciliation</li>
+                                </ul>
+                            </div>
+                            <div class="erp-report-category">
+                                <h4>Flower Operations Reports</h4>
+                                <ul>
+                                    <li>Flower Procurement Cost Analysis</li>
+                                    <li>Production Order Profitability</li>
+                                    <li>Fresh Inventory Turnover</li>
+                                    <li>Bill of Materials Costing</li>
+                                    <li>Order Entry Performance</li>
+                                    <li>Landed Cost per Unit</li>
+                                    <li>Vendor Performance Metrics</li>
+                                    <li>Quality Control Reports</li>
+                                    <li>Seasonal Trend Analysis</li>
+                                    <li>Waste & Spoilage Tracking</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meeting Goals -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('MeetingGoals')">
+                    <h2>Meeting Goals</h2>
+                    <button class="toggle-btn" id="toggle-MeetingGoals">â–¼</button>
+                </div>
+                <div class="section-content" id="MeetingGoals">
+                    <div class="erp-integration-container" style="height: 500px;">
+                        <img src="img/meetingGoals.png" alt="">
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+
+
+
+
+<!-- REvisar el siguiente y eliminar -->
              <!-- ERP Integration Chart Section -->
             <div class="section">
                 <div class="section-header" onclick="toggleSection('erp-integration')">
