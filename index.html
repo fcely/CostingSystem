@@ -3288,8 +3288,33 @@
 
 
 
+              <!-- Agreements -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('Agreements')">
+                    <h2>Agreements</h2>
+                    <div class="qa-icon" onclick="openQAModal(event, 'Agreements')" data-section="Agreements">💬</div>
+                    <button class="toggle-btn" id="toggle-Agreements">▼</button>
+                </div>
+                <div class="section-content collapsed" id="Agreements">
+                    <div class="erp-integration-container">
 
-              
+                      <iframe src="https://docs.google.com/spreadsheets/d/1hqepgOrRh2u5Op5W5C0JhUTrF3-6doxUME6q_bJA1vo/edit?usp=sharing" 
+                        width="100%" 
+                        height="800" 
+                        frameborder="0"
+                        style="min-height: 500px;">
+                     </iframe>
+
+
+
+                    </div>
+
+                </div>
+            </div>
+
+
+
+
 
         
     <!-- Q&A Summary Section -->
@@ -3745,7 +3770,8 @@ function openQAModal(event, sectionId) {
         'three-way-match': 'Three-Way Match Process',
         'month-end-close': 'Month-End Close Process',
         'Timeline': 'Project Timeline',
-        'Intacct' :'Intacct'
+        'Intacct' :'Intacct',
+        'Agreements' : 'Agreements'
     };
     
     title.textContent = `Q&A - ${sectionNames[sectionId] || sectionId}`;
@@ -4047,7 +4073,7 @@ function forceUpdateAllPendingCounts() {
             'meeting-agenda', 'historical-context', 'erp-integration', 
             'final-release', 'MeetingGoals', 'po-acceptance', 
             'inventory-management', 'production-reporting', 'order-entry', 
-            'three-way-match', 'month-end-close', 'Timeline','Intacct'
+            'three-way-match', 'month-end-close', 'Timeline','Intacct','Agreements'
         ];
         
         sections.forEach(sectionId => {
@@ -4124,7 +4150,7 @@ function updateIconBadge(sectionId, count) {
 }
 
 function updateAllPendingCounts() {
-    const sections = ['meeting-agenda', 'historical-context', 'erp-integration', 'final-release', 'MeetingGoals', 'po-acceptance', 'inventory-management', 'production-reporting', 'order-entry', 'three-way-match', 'month-end-close', 'Timeline','Intacct'];
+    const sections = ['meeting-agenda', 'historical-context', 'erp-integration', 'final-release', 'MeetingGoals', 'po-acceptance', 'inventory-management', 'production-reporting', 'order-entry', 'three-way-match', 'month-end-close', 'Timeline','Intacct','Agreements'];
     sections.forEach(sectionId => updatePendingCount(sectionId));
 }
 
@@ -4226,7 +4252,8 @@ function renderQASummary(allMessages) {
         'three-way-match': 'Three-Way Match Process',
         'month-end-close': 'Month-End Close Process',
         'Timeline': 'Project Timeline',
-        'Intacct' : 'Intacct'
+        'Intacct' : 'Intacct',
+        'Agreements':'Agreements'
     };
     
     // Questions and Answers Section
